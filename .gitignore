@@ -1,0 +1,33 @@
+# 环境与密钥 —— 绝不入库
+.env
+*.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+uv.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+.claude/
+
+# 依赖与构建
+node_modules/
+dist/
+target/
+
+# 数据与缓存
+*.db
+*.sqlite
+vector-data/
+uploads/
+
+# 日志
+*.log

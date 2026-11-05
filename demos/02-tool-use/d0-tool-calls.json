@@ -1,0 +1,28 @@
+{
+  "model": "deepseek-v4-flash",
+  "temperature": 0,
+  "messages": [
+    {
+      "role": "user",
+      "content": "查询订单 ORD-1001 的状态"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "getOrder",
+        "description": "按订单号查询订单。orderId 形如 ORD-数字。查不到 not_found。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "orderId": {
+              "type": "string"
+            }
+          },
+          "required": ["orderId"]
+        }
+      }
+    }
+  ]
+}

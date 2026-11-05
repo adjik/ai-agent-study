@@ -1,0 +1,60 @@
+:root {
+  --console-sidebar: #0f172a;
+  --console-sidebar-text: #94a3b8;
+  --console-accent: #38bdf8;
+  --console-bg: #f1f5f9;
+  --console-card: #ffffff;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
+  font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  background: var(--console-bg);
+  color: #0f172a;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.json-block {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow: auto;
+  max-height: 420px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.page-head {
+  margin-bottom: 18px;
+}
+
+.page-head h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.page-head p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
