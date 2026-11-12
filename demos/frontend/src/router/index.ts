@@ -16,6 +16,7 @@ import PromptTriageView from '@/views/prompt/PromptTriageView.vue'
 import ToolStoreView from '@/views/tool-use/ToolStoreView.vue'
 import ToolToolsView from '@/views/tool-use/ToolToolsView.vue'
 import ToolChatView from '@/views/tool-use/ToolChatView.vue'
+import LoopView from '@/views/agent-core/LoopView.vue'
 import type { Component } from 'vue'
 
 const viewMap: Record<DemoView, Component> = {
@@ -32,6 +33,7 @@ const viewMap: Record<DemoView, Component> = {
   toolStore: ToolStoreView,
   toolTools: ToolToolsView,
   toolChat: ToolChatView,
+  agentLoop: LoopView,
   placeholder: PlaceholderView,
 }
 

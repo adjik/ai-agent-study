@@ -25,6 +25,7 @@ export type DemoView =
   | 'toolStore'
   | 'toolTools'
   | 'toolChat'
+  | 'agentLoop'
   | 'placeholder'
 
 export interface DemoEndpoint {
@@ -379,9 +380,24 @@ export const DEMO_SERVICES: DemoService[] = [
     title: 'Agent 核心',
     subtitle: '手写 Loop、记忆、规划、固定图',
     codeDir: 'demos/backend/src/main/java/com/example/demos/stage03',
-    status: 'planned',
+    status: 'ready',
+    healthPath: '/health',
     endpoints: [
-      planned('agent-core', 'loop', '手写 Agent Loop', '/stage/03/loop'),
+      {
+        id: 'loop',
+        title: '手写 Agent Loop',
+        description:
+          'POST /api/stage/03/loop。JDK HttpClient 自己跑 while：有 tool_calls 就查表并把观察发回去，不再点菜或到达 maxSteps 就停。响应含 answer、stopReason、steps。',
+        route: '/demos/agent-core/loop',
+        method: 'POST',
+        apiPath: '/stage/03/loop',
+        view: 'agentLoop',
+        learning: {
+          plan: ['阶段 3 · Agent Loop'],
+          stageDoc: '第 2 天 · 一问一轮、一问多轮',
+          notes: ['finish_reason=tool_calls', 'role=tool 把观察发回', 'ReAct 先动作再看观察'],
+        },
+      },
       planned('agent-core', 'spring-ai', 'Spring AI Agent', '/stage/03/spring-ai'),
       planned('agent-core', 'langchain4j', 'LangChain4j Agent', '/stage/03/langchain4j'),
       planned('agent-core', 'plan', '规划对照', '/stage/03/plan'),

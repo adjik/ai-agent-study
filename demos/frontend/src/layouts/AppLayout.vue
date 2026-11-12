@@ -91,7 +91,7 @@ const onTabRemove = (targetPath: string | number) => {
 
       <el-menu
         :default-active="route.path"
-        :default-openeds="['hello-llm', 'prompt', 'tool-use']"
+        :default-openeds="['hello-llm', 'prompt', 'tool-use', 'agent-core']"
         router
         background-color="#0f172a"
         text-color="#94a3b8"
