@@ -54,12 +54,12 @@
 
 ## 代码写在哪、前端要不要开
 
-| 组件      | 磁盘路径                                                   | 新手怎么打开                                                    |
-| --------- | ---------------------------------------------------------- | --------------------------------------------------------------- |
-| Java 后端 | `demos/backend/src/main/java/com/example/demos/stage02/` | IDE 左侧按包展开`stage02`（**D1 才建这个文件夹**）      |
-| 对照样板  | `.../stage01/controller/PromptExperimentController.java` | D1 不会写时可打开看`ChatClient` 怎么注入                      |
-| Vue 前端  | `demos/frontend`                                         | **D0～D9 可以不启动**；菜单 Function Calling 目前是占位页 |
-| 实验说明  | `demos/02-tool-use/README.md`                            | 可选，D10 加分再看                                              |
+| 组件      | 磁盘路径                                                   | 新手怎么打开                                                                          |
+| --------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Java 后端 | `demos/backend/src/main/java/com/example/demos/stage02/` | IDE 左侧按包展开`stage02`（**D1 才建这个文件夹**）                            |
+| 对照样板  | `.../stage01/controller/PromptExperimentController.java` | D1 不会写时可打开看`ChatClient` 怎么注入                                            |
+| Vue 前端  | `demos/frontend`                                         | **D0～D9 可以不启动**；菜单 Function Calling 已接通 `/chat` 与 `/chat-lc4j` |
+| 实验说明  | `demos/02-tool-use/README.md`                            | 可选，D10 加分再看                                                                    |
 
 **D1 起启动后端（终端 1，占着别关）**：
 
@@ -1153,12 +1153,12 @@ D1～D5 全走 Spring AI。只走一条框架，你会把「`.tools()` + `@Tool`
 
 ### 必知
 
-- [ ] **K14** LangChain4j 用 `dev.langchain4j.agent.tool.Tool` 和 `@P`；Spring AI 用 `org.springframework.ai.tool.annotation.Tool`。**两个 import 不要写进同一个 Java 类**。
-- [ ] **K15** `AiServices` 像 Feign：你写接口 + `@SystemMessage`，框架生成实现并在背后调 Tool。
+- [X] **K14** LangChain4j 用 `dev.langchain4j.agent.tool.Tool` 和 `@P`；Spring AI 用 `org.springframework.ai.tool.annotation.Tool`。**两个 import 不要写进同一个 Java 类**。
+- [X] **K15** `AiServices` 像 Feign：你写接口 + `@SystemMessage`，框架生成实现并在背后调 Tool。
 
 ### 逐步操作
 
-- [ ] **D6-O1** `【写后端】` 打开 `demos/backend/pom.xml`，在 `<dependencies>` 里增加下面两段（**不要**加 `langchain4j-spring-boot-starter`，也不要加 `langchain4j-open-ai-spring-boot-starter`）。
+- [X] **D6-O1** `【写后端】` 打开 `demos/backend/pom.xml`，在 `<dependencies>` 里增加下面两段（**不要**加 `langchain4j-spring-boot-starter`，也不要加 `langchain4j-open-ai-spring-boot-starter`）。
 
   **为什么：** 工程里已经有 `spring-ai-starter-model-openai`，它负责 DeepSeek 的 `ChatClient`。LangChain4j 的 Spring Boot starter 会再注册一套 ChatModel，两个自动配置抢同一个 `api-key` / `base-url`，启动期常见的是 Bean 冲突，而且你分不清 `/chat` 到底走了哪套。只要核心库 `langchain4j` 和 OpenAI 兼容客户端 `langchain4j-open-ai`，下面用 `@Bean` 手动 `new`，两条链路互不影响。版本写死 `1.12.1`，是为了和文档示例的 API（`AiServices`、`OpenAiChatModel`）对齐，不要改成 Maven 中央仓库上更新的主版本再来排查方法改名。
 
@@ -1177,7 +1177,7 @@ D1～D5 全走 Spring AI。只走一条框架，你会把「`.tools()` + `@Tool`
 
 保存后 IDE 点 **Reload Maven**。终端 1 若正在跑，先 `Ctrl+C`，再在 `demos/backend` 执行 `mvn -q -DskipTests compile`。出现 `BUILD SUCCESS` 再写 Java；依赖没下完就写，IDE 会把 `dev.langchain4j` 全标红，你分不清是包名写错还是仓库没刷。
 
-- [ ] **D6-O2** `【写后端】` 新建 `stage02/lc4j/Lc4jOrderTools.java`。方法体只委托已有 Store，**不要**复制一份订单 Map。
+- [X] **D6-O2** `【写后端】` 新建 `stage02/lc4j/Lc4jOrderTools.java`。方法体只委托已有 Store，**不要**复制一份订单 Map。
 
   **为什么：** 对照实验只能改框架，不能改数据。两边各写一份 `ORD-1001`，以后有人改了状态，两个接口会给出两个「事实」，你无法判断是框架不同还是夹具分叉了。注解必须用 `dev.langchain4j.agent.tool.Tool` 和 `@P`。这个类里不要出现 `org.springframework.ai.tool.annotation`。两个同名 `@Tool` 写进一个类，编译可能通过，运行时只有一边的扫描认得出方法。单独放 `lc4j` 包，就是为了 import 不会混。
 
@@ -1221,7 +1221,7 @@ public class Lc4jOrderTools {
 
 若你 D3 的方法名不是 `find`，只改调用处，返回值保持 JSON 字符串。不要在这个类里 `new` 一份库存数据。
 
-- [ ] **D6-O3** `【写后端】` 新建 `stage02/lc4j/OrderAssistant.java`。这是接口，没有实现类。
+- [X] **D6-O3** `【写后端】` 新建 `stage02/lc4j/OrderAssistant.java`。这是接口，没有实现类。
 
   **为什么：** `AiServices` 会在运行时为这个接口生成实现，类似 Feign：你声明方法，框架负责 HTTP、把工具结果塞回模型、再调你的 `@Tool`。自己写实现类就绕开了它要你学的那一层。`@SystemMessage` 放角色和边界，`@UserMessage` 标出哪一个参数是用户问题，这样 system 和 user 不会糊成一段字符串——和阶段 1 把 `.system()` / `.user()` 拆开是同一原因。
 
@@ -1237,7 +1237,7 @@ public interface OrderAssistant {
 }
 ```
 
-- [ ] **D6-O4** `【写后端】` 新建 `stage02/lc4j/Stage02Lc4jConfig.java`。ChatModel 在这里手动 new，Key 从已有的 Spring 配置读。
+- [X] **D6-O4** `【写后端】` 新建 `stage02/lc4j/Stage02Lc4jConfig.java`。ChatModel 在这里手动 new，Key 从已有的 Spring 配置读。
 
   **为什么：** Key 已经在 `application.properties` 的 `spring.ai.openai.api-key`（值是 `${DEEPSEEK_API_KEY}`）。再读一遍是为了不复制密钥、也不再引入一套配置项。`temperature(0.0)` 与 `/chat` 相同，是为了 D7 对照时少一个「温度不同」的干扰。`.tools(lc4jOrderTools)` 是这条链路的注册点，漏了就和 Spring 侧漏 `.tools()` 一样，模型看不到菜单。
 
@@ -1273,7 +1273,7 @@ public class Stage02Lc4jConfig {
 }
 ```
 
-- [ ] **D6-O5** `【写后端】` 新建 `stage02/lc4j/Stage02Lc4jController.java`，不要改 `Stage02ToolController` 的构造器。
+- [X] **D6-O5** `【写后端】` 新建 `stage02/lc4j/Stage02Lc4jController.java`，不要改 `Stage02ToolController` 的构造器。
 
   **为什么：** `/chat` 已经能用。把 `OrderAssistant` 加进原来的构造器，参数一错，Spring 和 Lc4j 两条会一起起不来，你不知道是哪条坏了。单独一个 Controller 只注入 `OrderAssistant`，路径仍挂在 `/api/stage/02` 下，curl 的 host 和端口不用换。这个接口只返回 `answer`：Lc4j 今天不接 `ToolCallLog`，D7 对比的就是「有轨迹的 Spring」和「只有回答的 Lc4j」。
 
@@ -1304,10 +1304,10 @@ public class Stage02Lc4jController {
 }
 ```
 
-- [ ] **D6-O6** `【写后端】` 重启终端 1。
+- [X] **D6-O6** `【写后端】` 重启终端 1。
 
   **为什么：** 新依赖、新 `@Bean`、新 `@RestController` 都只在启动时注册。不重启就打 `/chat-lc4j` 会 404，容易误判成路径写错。启动日志里如果报 `OrderAssistant` 创建失败，先看 `Stage02Lc4jConfig` 的 `apiKey` 是否读到空串（根目录 `.env` 和 D0 一样要在跑 Maven 的环境里生效）。
-- [ ] **D6-O7** `【调用后端】` 同一句 Q1 先打 Spring，再打 Lc4j。
+- [X] **D6-O7** `【调用后端】` 同一句 Q1 先打 Spring，再打 Lc4j。
 
   **为什么：** 两个请求的 `question` 必须逐字相同，对照的才是框架而不是问法。先打已经跑通的 `/chat`，是为了确认重启没有把 D1 的链路打坏；再打新接口。Lc4j 的 JSON 里没有 `toolsCalled` 是预期，不要为了字段一致去改今天的返回值。
 
@@ -1323,13 +1323,13 @@ curl -sS http://localhost:8080/api/stage/02/chat-lc4j \
 
 **成功长什么样**：两个 JSON 的 `answer` 都提到 **PAID** 或「已支付」。Spring 那条还可以带 `toolsCalled`；Lc4j 这条只有 `answer`。两条都 200 但只有一条提到已支付：看终端 1，确认失败的那条有没有抛 `invalid_argument` 或 401。
 
-- [ ] **D6-O8** 勾 K14、K15。
+- [X] **D6-O8** 勾 K14、K15。
 
   **为什么：** K14 是两个 `@Tool` 不能混包，K15 是 `AiServices` 替你生成实现并跑工具循环。Q1 两边都答出 PAID，且 Lc4j 的类里没有 Spring AI 的 import，这两条才勾。
 
 ### D6 完成判定
 
-- [ ] pom 无 starter 冲突；Spring `@Tool` 与 LC4j `@Tool` 分两个类；`/chat-lc4j` Q1 通；K14 K15 已勾
+- [X] pom 无 starter 冲突；Spring `@Tool` 与 LC4j `@Tool` 分两个类；`/chat-lc4j` Q1 通；K14 K15 已勾
 
 ---
 
@@ -1347,11 +1347,11 @@ D6 只证明了 Q1 两边都能答。今天不改代码，把 Q1 和 Q3 各打�
 
 ### 必知
 
-- [ ] **K16** 同一业务问法，两套框架都应能查到 ORD-1001 / 库存事实；差异在 **你怎么注册 Tool、谁跑循环**，不在业务结果瞎编。
+- [X] **K16** 同一业务问法，两套框架都应能查到 ORD-1001 / 库存事实；差异在 **你怎么注册 Tool、谁跑循环**，不在业务结果瞎编。
 
 ### 逐步操作
 
-- [ ] **D7-O1** `【调用后端】` 确认终端 1 仍是今天要用的进程：日志里能看到启动成功，且没有停在编译错误上。
+- [X] **D7-O1** `【调用后端】` 确认终端 1 仍是今天要用的进程：日志里能看到启动成功，且没有停在编译错误上。
 
   **为什么：** 今天的结论全部来自 curl。若 8080 上还是 D5 之前的进程，`/chat-lc4j` 会 404，你会被记成「Lc4j 答不出来」。先打一次不花钱的菜单，确认进程是 D3 之后的：
 
@@ -1361,7 +1361,7 @@ curl -sS http://localhost:8080/api/stage/02/tools
 
   数组里应有 `getOrder` 和 `getInventory`。没有 `getInventory` 就不要开始对照，先回到 D3 重启。
 
-- [ ] **D7-O2** `【调用后端】` Q1 打两轮。每一轮都是先 Spring、后 Lc4j，question 不要改字。
+- [X] **D7-O2** `【调用后端】` Q1 打两轮。每一轮都是先 Spring、后 Lc4j，question 不要改字。
 
   **为什么：** 打两轮是为了看稳定性，不是为了凑次数。temperature 已是 0，仍可能有措辞差别；两轮都提到已支付 / PAID，才把「框架都能读到 ORD-1001」写进 §9。只成功一轮，就在现象里写「第 2 次偏了」，不要改成只记成功的那次。
 
@@ -1379,7 +1379,7 @@ curl -sS -w '\nhttp_code=%{http_code} time=%{time_total}\n' \
 
   `-w` 打出耗时，是为了 §9 的「耗时 ms」有数字可填。`time_total` 单位是秒，填表时乘 1000。Spring 的 `toolsCalled` 里应有 `getOrder`；Lc4j 没有这个字段，只看 `answer`。
 
-- [ ] **D7-O3** `【调用后端】` Q3 同样两轮、两个 URL。
+- [X] **D7-O3** `【调用后端】` Q3 同样两轮、两个 URL。
 
   **为什么：** Q1 只需要一把工具，两边都容易过。Q3 要先查订单再查库存，才能看出循环是不是真的跑了第二步。Spring 看 `toolsCalled` 是否两条（`getOrder` 与 `getInventory`）。Lc4j 没有轨迹，只能看 answer 是否同时用到「已支付」和库存 **10**，而不是只回答了订单状态。
 
@@ -1395,19 +1395,19 @@ curl -sS http://localhost:8080/api/stage/02/chat-lc4j \
 
   Lc4j 的 answer 若只说已支付、完全不提库存：在 §9 注明「Lc4j Q3 没体现第二把工具」。不要为了让它提到库存去改 system 文案——今天不写代码，记下来的偏差就是对照结果。
 
-- [ ] **D7-O4** `【不写代码】` 填 **[§9](#sec-s9)**「框架 Spring Q1」「框架 LC4j Q1」两行。
+- [X] **D7-O4** `【不写代码】` 填 Lc4j Q3 没体现第二把工具「框架 Spring Q1」「框架 LC4j Q1」两行。
 
   **为什么：** 这两行是 S2-T5 的证据，不填的话总计划那一格只是「我感觉两边都行」。耗时用 D7-O2 的 `time_total`；「调了哪把」Spring 写 `getOrder`，Lc4j 写 `answer 含 PAID，响应无 toolsCalled`。
-- [ ] **D7-O5** `【不写代码】` 滚到文末 **框架对照（K16）** 表，五格「我的实测」各写一句你刚看到的，不要抄左边两列的说明书。
+- [X] **D7-O5** `【不写代码】` 滚到文末 **框架对照（K16）** 表，五格「我的实测」各写一句你刚看到的，不要抄左边两列的说明书。
 
   **为什么：** 左列是教材结论，右列才是你的进程。例如注册那一行写「Spring 在 Controller `.tools(两个 Bean)`；Lc4j 在 `Stage02Lc4jConfig` 的 `AiServices.builder.tools`」。空着这一列，K16 只是读过表，没有对照过。
-- [ ] **D7-O6** 勾 K16。
+- [X] **D7-O6** 勾 K16。
 
   **为什么：** K16 的判定是「事实相同、注册方式不同」。Q1 两边都对上 PAID，且你能指出 `.tools()` 和 `AiServices.builder().tools()` 各在哪个类，再勾。
 
 ### D7 完成判定
 
-- [ ] §9 框架两行有数据；对照表「我的实测」已填；K16 已勾
+- [X] §9 框架两行有数据；对照表「我的实测」已填；K16 已勾
 
 ---
 
@@ -1429,12 +1429,12 @@ Tool 循环比 D0 贵：同一次 `/chat` 里，模型至少被叫两次（先�
 
 ### 必知
 
-- [ ] **K17** DeepSeek 磁盘缓存默认开；**前缀从 token 0 一致** 才可能 hit；第二次相同 Q1 可能看到 `prompt_cache_hit_tokens > 0`（也可能仍为 0，如实记录）。
-- [ ] **K18** system + tools 固定、**user 放最后** 利于缓存；Tool 循环至少 **2 次** 模型调用（点菜 + 总结），比 D0 单次贵是正常的。
+- [X] **K17** DeepSeek 磁盘缓存默认开；**前缀从 token 0 一致** 才可能 hit；第二次相同 Q1 可能看到 `prompt_cache_hit_tokens > 0`（也可能仍为 0，如实记录）。
+- [X] **K18** system + tools 固定、**user 放最后** 利于缓存；Tool 循环至少 **2 次** 模型调用（点菜 + 总结），比 D0 单次贵是正常的。
 
 ### 逐步操作
 
-- [ ] **D8-O1** `【不写代码】` 在仓库根目录加载 Key（与 D0-O1 相同）。
+- [X] **D8-O1** `【不写代码】` 在仓库根目录加载 Key（与 D0-O1 相同）。
 
   **为什么：** 今天的 usage 来自 `api.deepseek.com`，不来自 8080。没加载 Key 会 401，你看不到 `usage`，会误以为接口没返回缓存字段。
 
@@ -1444,7 +1444,7 @@ set -a && [ -f .env ] && source .env && set +a
 test -n "$DEEPSEEK_API_KEY" && echo "key ok"
 ```
 
-- [ ] **D8-O2** `【不写代码】` 用 **同一个文件** `demos/02-tool-use/d0-tool-calls.json` 连续打 2 次，中间不要改文件。
+- [X] **D8-O2** `【不写代码】` 用 **同一个文件** `demos/02-tool-use/d0-tool-calls.json` 连续打 2 次，中间不要改文件。
 
   **为什么：** 缓存比对的是整段前缀是否从 token 0 开始一致。两次都 `-d @同一个文件`，字节才相同。你若手改 temperature 或调换 messages 顺序，第二次就会 miss，然后你会以为「缓存没开」。打两次而不是十次，是因为文档要的是「第二次相对第一次有没有 hit」，不是压测。
 
@@ -1461,7 +1461,7 @@ done
 
   把两次打印都留在终端里。第二次的 `prompt_cache_hit_tokens` 就是今天要记的数。**0 也要记 0**，不要重试到出现非 0 为止——没命中本身就是结果（前缀太短、缓存尚未写入、或账号侧未命中，都可能）。
 
-- [ ] **D8-O3** `【调用后端】` 终端 1 保持 8080。同一句 Q1 打两次 `/chat`，只比较两次耗时，不要在这段 JSON 里找 `usage`。
+- [X] **D8-O3** `【调用后端】` 终端 1 保持 8080。同一句 Q1 打两次 `/chat`，只比较两次耗时，不要在这段 JSON 里找 `usage`。
 
   **为什么：** `/chat` 的返回是你自己 `Map.of("answer", ...)`，没有把 DeepSeek 的 usage 透传出来。在这里找 `prompt_cache_hit_tokens` 一定找不到，不代表没走缓存。连打两次是为了体会 K18：这一次用户请求在服务端至少包含「点菜」和「总结」两次模型调用，通常比 D8-O2 那一次直连更慢。question 不改，是为了和前面的 Q1 仍是同一条订单，而不是为了在 8080 上制造 cache hit。
 
@@ -1477,16 +1477,16 @@ done
 
   `-o /dev/null` 是为了只看时间。若你想同时确认业务没坏，去掉 `-o /dev/null`，answer 里仍应有已支付。
 
-- [ ] **D8-O4** `【不写代码】` 填 **[§9](#sec-s9)**「缓存」行。
+- [X] **D8-O4** `【不写代码】` 填 **[§9](#sec-s9)**「缓存」行。
 
   **为什么：** 这行是 S2-T7 的原始数。`hit=` 后面写 D8-O2 **第二次**打印的 `prompt_cache_hit_tokens`。现象里补一句 `/chat` 两次的 `time=`，用来对照「带工具循环更慢」。不要把两次 hit 写成同一个数。
-- [ ] **D8-O5** 勾 K17、K18。
+- [X] **D8-O5** 勾 K17、K18。
 
   **为什么：** K17 是「前缀一致才可能 hit，没命中也要如实记」。K18 是「system 和 tools 放前面、user 放最后，以及工具循环至少两次模型调用」。两项都对上你今天的终端输出再勾。
 
 ### D8 完成判定
 
-- [ ] 直连同一 JSON 打过两次，并记下第二次 hit；`/chat` 同一 Q1 打过两次；§9 缓存行已填；K17 K18 已勾
+- [X] 直连同一 JSON 打过两次，并记下第二次 hit；`/chat` 同一 Q1 打过两次；§9 缓存行已填；K17 K18 已勾
 
 ---
 
@@ -1515,7 +1515,7 @@ done
 
 ### 逐步操作
 
-- [ ] **D9-O1** `【调用后端】` **选错工具**，连打 2 次。
+- [X] **D9-O1** `【调用后端】` **选错工具**，连打 2 次。
 
   **为什么：** 这句话把仓库放在 SKU 前面，和 Q2 的语序不同，专门看模型会不会因为「WH-A」像个单号就去调 `getOrder`。description 在 D3 写成互斥，就是为了扛这种句子。判定只看终端 1：两次都应出现 `[tool] getInventory`，且 `sku=SKU-88`、`warehouse=WH-A`。若两次都只有 `getOrder`，在 §9 写「选错」，不要回头改问法把它救成正确。
 
@@ -1525,7 +1525,7 @@ curl -sS http://localhost:8080/api/stage/02/chat \
   -d '{"question":"WH-A 的 SKU-88 还有多少库存？"}'
 ```
 
-- [ ] **D9-O2** `【调用后端】` **胡编参数**，连打 2 次。
+- [X] **D9-O2** `【调用后端】` **胡编参数**，连打 2 次。
 
   **为什么：** 这句话里没有 `ORD-数字`。模型若硬点 `getOrder`，D5 的校验应挡住，日志是 `invalid_argument`，`toolsCalled.success` 为 false。模型若直接编一个 PAID 又不调工具，则是另一类失败（该调不调 + 幻觉），照实写，不要为了归类干净只保留一种。两次都不应出现夹具里的 PAID 被安到「那个单」上。
 
@@ -1535,7 +1535,7 @@ curl -sS http://localhost:8080/api/stage/02/chat \
   -d '{"question":"查一下那个单"}'
 ```
 
-- [ ] **D9-O3** `【调用后端】` **该调不调**，把 Q1 再打 2 次。
+- [X] **D9-O3** `【调用后端】` **该调不调**，把 Q1 再打 2 次。
 
   **为什么：** Q1 是唯一有标准答案、且必须查库的句子。answer 里有「已支付」但终端 1 没有 `[tool] getOrder`，就是模型在背 D1 的答案，工具链路是断的。这类失败用 answer 判断不出来，所以今天强制看服务器日志。两次都要有日志才算这一类通过。
 
@@ -1559,16 +1559,16 @@ curl -sS http://localhost:8080/api/stage/02/store
 
   在 `/store` 的 JSON 里找到 `SKU-88` 与 `WH-A`，`available` 必须是 **10**。
 
-- [ ] **D9-O5** `【不写代码】` 四类各用一句话填进 **[§9](#sec-s9)**「失败」行。格子不够就写在该行「一句话现象」里，用分号隔开四类。
+- [X] **D9-O5** `【不写代码】` 四类各用一句话填进 **[§9](#sec-s9)**「失败」行。格子不够就写在该行「一句话现象」里，用分号隔开四类。
 
   **为什么：** 阶段 3 的评估集要按失败类型统计。合并成「今天测了失败」会把四类证据丢掉。每句都带上你看到的工具名或 `available=10`，不要只写「正常」。
-- [ ] **D9-O6** 勾 K19。
+- [X] **D9-O6** 勾 K19。
 
   **为什么：** K19 勾选表示你能把一次坏回答归到上面四类之一，并指出证据在日志、`toolsCalled` 还是 `/store`。四段 curl 没跑齐就不要勾。
 
 ### D9 完成判定
 
-- [ ] 四类都试过；Q1 仍有工具日志；改库存未成功；K19 已勾
+- [X] 四类都试过；Q1 仍有工具日志；改库存未成功；K19 已勾
 
 ---
 
@@ -1590,10 +1590,10 @@ curl -sS http://localhost:8080/api/stage/02/store
 
 ### 逐步操作
 
-- [ ] **D10-O1** `【不写代码】` 打开本文 **[§9](#sec-s9)**，只数「一句话现象」这一列里非空的行。
+- [X] **D10-O1** `【不写代码】` 打开本文 **[§9](#sec-s9)**，只数「一句话现象」这一列里非空的行。
 
   **为什么：** 总计划允许打勾的前提是实验留了痕。空着的「日期 / 耗时」可以补，但现象为空的行不能算数——没有现象就无法写下面三句结论。至少 8 行非空，是因为直连、Q1 日志、多工具三行、策略、错误、入参、两个框架、缓存，这几类缺一类，三句结论里就会有一句没有出处。不够 8 行就回到对应那一天的 O 步骤补 curl，不要在 D10 编一句凑数。
-- [ ] **D10-O2** `【不写代码】` 在 §9 表格正下方写 3 条，横线换成表里已有的原文，不要写新实验。
+- [X] **D10-O2** `【不写代码】` 在 §9 表格正下方写 3 条，横线换成表里已有的原文，不要写新实验。
 
   **为什么：** 这三句是阶段 2 的验收口径，分别对应「事实来自工具」「选工具靠 description」「错误和成本你能量出来」。用表里的字，是为了结论能回溯到某一次 curl；现写一句「我学会了 Tool Use」无法对照 D0 和 D1 的差异。
 
@@ -1629,7 +1629,7 @@ curl -sS http://localhost:8080/api/stage/02/store
 1. 终端另开一个窗口：`cd demos/frontend && npm run dev`。浏览器打开 `http://localhost:5173/demos/tool-use/chat`。
 2. 输入 Q1，点发送。页面上的 JSON 应含「已支付」或 PAID。这一步是为了确认 Vite 代理到的是 8080 上现在这个进程，而不是一份旧的静态说明。
 3. 若 JSON 里还没有 `toolsCalled`：打开 `demos/frontend/src/api/tool-use.ts` 的 `ToolChatResponse`，补上 `toolsCalled` 字段（类型与 D4 的列表一致）。`ToolChatView.vue` 已用 `JsonPanel` 打整段响应，字段加上后刷新即可看见。这样做是为了调用方不用看终端 1 也能验收 Q3。
-4. `chat-lc4j` 在 `demos.config.ts` 里仍是 planned。要在菜单里点它，再把该 endpoint 改成与 `chat` 相同的 ready 写法，并在 `tool-use.ts` 加一个 `POST /stage/02/chat-lc4j`。这是 D7 的图形版，curl 已经对照过就可以不做。
+4. 菜单「LangChain4j 对照」走 `POST /stage/02/chat-lc4j`，页面与 Spring 对话共用问法按钮。响应只有 `answer`，没有 `toolsCalled`。这是 D7 的图形版。
 5. （可选）`demos/02-tool-use/tool_call_raw.py` 用与阶段 0 相同的 OpenAI SDK 重放 D0 的请求体，只打印 `finish_reason` 和 `tool_calls`。它不执行函数，用来在不想记 curl 时复现「点菜」。
 
 卡住任何一步都跳过，回到 D10 完成判定即可。

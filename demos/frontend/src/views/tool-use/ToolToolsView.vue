@@ -17,7 +17,7 @@ const { loading, error, data, elapsedMs, run } = useRunner(() => toolUseApi.tool
   <PageIntro :demo="demo" :endpoint="endpoint" />
   <el-card shadow="never">
     <p class="hint">
-      不调 LLM。列出当前注册到 Spring 的工具名，应与 OrderQueryTools 上的 @Tool 一致（D1 只有 getOrder）。
+      不调 LLM。列出 Spring 侧注册的工具名，应同时有 getOrder 和 getInventory。
     </p>
     <div class="toolbar">
       <el-button type="primary" :loading="loading" @click="run">加载 /tools</el-button>

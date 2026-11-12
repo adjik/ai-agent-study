@@ -316,7 +316,7 @@ export const DEMO_SERVICES: DemoService[] = [
       {
         id: 'tools',
         title: '已注册工具列表',
-        description: 'GET /api/stage/02/tools，不调 LLM。应看到 getOrder（对应 @Tool + .tools()）。',
+        description: 'GET /api/stage/02/tools，不调 LLM。应看到 getOrder 和 getInventory。',
         route: '/demos/tool-use/tools',
         method: 'GET',
         apiPath: '/stage/02/tools',
@@ -330,7 +330,7 @@ export const DEMO_SERVICES: DemoService[] = [
       {
         id: 'store',
         title: '内存订单夹具',
-        description: 'GET /api/stage/02/store，不调 LLM。D1 验证 ORD-1001 为 PAID。',
+        description: 'GET /api/stage/02/store，不调 LLM。订单 ORD-1001 为 PAID，库存 SKU-88 / WH-A 为 10。',
         route: '/demos/tool-use/store',
         method: 'GET',
         apiPath: '/stage/02/store',
@@ -343,19 +343,34 @@ export const DEMO_SERVICES: DemoService[] = [
       },
       {
         id: 'chat',
-        title: 'Tool 对话 Q1',
-        description: 'POST /api/stage/02/chat，body question。Spring .tools(getOrder) 自动循环。',
+        title: 'Spring AI 对话',
+        description:
+          'POST /api/stage/02/chat。Spring AI 自动跑工具循环，响应带 answer 和 toolsCalled。',
         route: '/demos/tool-use/chat',
         method: 'POST',
         apiPath: '/stage/02/chat',
         view: 'toolChat',
         learning: {
-          plan: ['S2-T2'],
-          stageDoc: 'D1 · D1-O5（Q1）',
-          notes: ['K5 @Tool', 'K6 .tools(orderQueryTools)'],
+          plan: ['S2-T2', 'S2-T4', 'S2-T6'],
+          stageDoc: 'D1～D5 · Q1 / Q2 / Q3 / not_found / invalid_argument',
+          notes: ['K5 @Tool', 'K6 .tools()', 'K10 toolsCalled', 'K12 入参校验'],
         },
       },
-      planned('tool-use', 'chat-lc4j', 'LangChain4j 对照', '/stage/02/chat-lc4j'),
+      {
+        id: 'chat-lc4j',
+        title: 'LangChain4j 对照',
+        description:
+          'POST /api/stage/02/chat-lc4j。同一份 Store、同一句问题，由 AiServices 跑工具循环。响应只有 answer。',
+        route: '/demos/tool-use/chat-lc4j',
+        method: 'POST',
+        apiPath: '/stage/02/chat-lc4j',
+        view: 'toolChat',
+        learning: {
+          plan: ['S2-T3', 'S2-T5'],
+          stageDoc: 'D6 · /chat-lc4j；D7 与 Spring 对照',
+          notes: ['K14 LC4j @Tool 与 Spring @Tool 分两个类', 'K15 AiServices'],
+        },
+      },
     ],
   },
   {

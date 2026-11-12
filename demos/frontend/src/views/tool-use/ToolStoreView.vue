@@ -16,7 +16,9 @@ const { loading, error, data, elapsedMs, run } = useRunner(() => toolUseApi.stor
 <template>
   <PageIntro :demo="demo" :endpoint="endpoint" />
   <el-card shadow="never">
-    <p class="hint">不调 LLM，只读内存夹具。应能看到 ORD-1001 的 status 为 PAID。</p>
+    <p class="hint">
+      不调 LLM，只读内存夹具。orders 里 ORD-1001 的 status 是 PAID；inventory 里 SKU-88 / WH-A 的 available 是 10。
+    </p>
     <div class="toolbar">
       <el-button type="primary" :loading="loading" @click="run">加载 /store</el-button>
       <span v-if="elapsedMs" class="elapsed">耗时 {{ elapsedMs }} ms</span>

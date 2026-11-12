@@ -6,9 +6,18 @@ const http = createClient(BACKEND.proxyPrefix)
 const STORE_PATH = '/stage/02/store'
 const TOOLS_PATH = '/stage/02/tools'
 const CHAT_PATH = '/stage/02/chat'
+const CHAT_LC4J_PATH = '/stage/02/chat-lc4j'
+
+export interface ToolCallRecord {
+  name: string
+  args: string
+  success: boolean
+  elapsedMs: number
+}
 
 export interface ToolChatResponse {
   answer: string
+  toolsCalled?: ToolCallRecord[]
 }
 
 export interface ToolListResponse {
@@ -27,6 +36,14 @@ export interface ToolStoreResponse {
       warehouse: string
     }
   >
+  inventory: Record<
+    string,
+    {
+      sku: string
+      warehouse: string
+      available: number
+    }
+  >
 }
 
 export const toolUseApi = {
@@ -36,4 +53,7 @@ export const toolUseApi = {
 
   chat: (question: string) =>
     http.post<ToolChatResponse>(CHAT_PATH, { question }).then((r) => r.data),
+
+  chatLc4j: (question: string) =>
+    http.post<ToolChatResponse>(CHAT_LC4J_PATH, { question }).then((r) => r.data),
 }

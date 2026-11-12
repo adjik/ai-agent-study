@@ -25,7 +25,7 @@ public class Lc4jOrderTools {
             return "{\"error\":\"invalid_argument\",\"orderId\":\"" + (orderId == null ? "" : orderId) + "\"}";
         }
         return orderStore.findById(orderId)
-                .map(r -> "{\"orderId\":\"" + r.orderId() + "\",\"status\":\"" + r.status() + "\"}")
+                .map(r -> r.toString())
                 .orElse("{\"error\":\"not_found\",\"orderId\":\"" + orderId + "\"}");
     }
 

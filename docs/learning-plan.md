@@ -293,34 +293,34 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 用你已经会的接口开发来对照：
 
-| 你已经会的 | 在 Function Calling 里 | 谁来做 |
-| --- | --- | --- |
+| 你已经会的                                              | 在 Function Calling 里                                        | 谁来做                   |
+| ------------------------------------------------------- | ------------------------------------------------------------- | ------------------------ |
 | OpenAPI / Dubbo 接口说明（operationId、字段描述、必填） | 请求里的 `tools`：`name`、`description`、`parameters` | 你写菜单，随每次请求带上 |
-| 调用方按文档填 JSON | 响应里的 `tool_calls`：选中的函数名 + 实参 | 模型 |
-| Provider 查库、返回 DTO | `@Tool` 方法，例如查 `OrderStore` | 你的 Spring 进程 |
-| 把 DTO 组织成给前端的文案 | 下一轮模型生成的自然语言 | 模型 |
+| 调用方按文档填 JSON                                     | 响应里的 `tool_calls`：选中的函数名 + 实参                  | 模型                     |
+| Provider 查库、返回 DTO                                 | `@Tool` 方法，例如查 `OrderStore`                         | 你的 Spring 进程         |
+| 把 DTO 组织成给前端的文案                               | 下一轮模型生成的自然语言                                      | 模型                     |
 
 一次提问在协议上走完这些步。DeepSeek 用的是 OpenAI 兼容格式；Spring AI 的 `ToolCallingAdvisor`、LangChain4j 的 `AiServices` 把第 3、4 步收进一次 `call()`，Controller 对外仍是一个 POST：
 
-| 步 | 发生什么 | 本仓库里对应 |
-| --- | --- | --- |
-| 1 | 应用把问句和菜单发给模型 | D0 的 curl body；D1 起是 `ChatClient.tools(...)` |
-| 2 | 模型返回 `tool_calls`，`finish_reason=tool_calls`。这一轮还没有「已支付」 | D0 停在这里，响应里没有 `PAID` |
-| 3 | 应用执行 Java 方法，得到 `PAID` 或库存 `10` | `getOrder` / `getInventory` |
-| 4 | 把结果以 `role=tool` 再发给模型 | 框架自动做；D0 只先认出这个字段 |
-| 5 | 模型写成给人看的句子。还要再查一处时，回到第 2 步 | Q3「能不能发货」会连查订单和库存 |
+| 步 | 发生什么                                                                      | 本仓库里对应                                       |
+| -- | ----------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1  | 应用把问句和菜单发给模型                                                      | D0 的 curl body；D1 起是 `ChatClient.tools(...)` |
+| 2  | 模型返回 `tool_calls`，`finish_reason=tool_calls`。这一轮还没有「已支付」 | D0 停在这里，响应里没有 `PAID`                   |
+| 3  | 应用执行 Java 方法，得到 `PAID` 或库存 `10`                               | `getOrder` / `getInventory`                    |
+| 4  | 把结果以 `role=tool` 再发给模型                                             | 框架自动做；D0 只先认出这个字段                    |
+| 5  | 模型写成给人看的句子。还要再查一处时，回到第 2 步                             | Q3「能不能发货」会连查订单和库存                   |
 
 本阶段用订单和库存把上面 5 步跑通：单工具、多工具、参数校验、调用日志、Spring AI 与 LangChain4j 各一版。菜单里先放查询。手写循环、会话记忆、RAG、MCP 从阶段 3 起再加。
 
 **先读（概念向，每篇十几分钟，读完再做下面的 S2-T1）**：
 
-| 读什么 | 链接 | 读完你应能说出 |
-| --- | --- | --- |
-| 这项能力是什么、定义 / 调用 / 整合各谁干活 | [AWS：什么是 Function Calling](https://aws.amazon.com/cn/what-is/function-calling/) | 模型产出调用请求，应用执行，结果再交回模型写回答 |
-| 工具、工具调用、工具输出，以及五步往返 | [OpenAI：函数调用（中文）](https://developers.openai.com/zh-Hans/api/docs/guides/function-calling) | `tool_calls` 是模型发出的请求，执行在你的应用里 |
-| 应用端解析函数名和入参、再发起第二次调用 | [阿里云百炼：Function Calling](https://help.aliyun.com/zh/model-studio/qwen-function-calling) | 工具输出放进 `role=tool` 之后，模型才做自然语言总结 |
-| 本仓库实际打的协议字段 | [DeepSeek Tool Calls](https://api-docs.deepseek.com/zh-cn/guides/tool_calls) | `tools` / `tool_calls` / `finish_reason` 在 JSON 里的位置 |
-| Java 里菜单怎么挂到方法上 | [Spring AI Tool Calling](https://docs.spring.io/spring-ai/reference/api/tools.html) | `@Tool` 是菜单，`.tools()` 声明这次请求带上哪些方法 |
+| 读什么                                     | 链接                                                                                              | 读完你应能说出                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| 这项能力是什么、定义 / 调用 / 整合各谁干活 | [AWS：什么是 Function Calling](https://aws.amazon.com/cn/what-is/function-calling/)                | 模型产出调用请求，应用执行，结果再交回模型写回答                |
+| 工具、工具调用、工具输出，以及五步往返     | [OpenAI：函数调用（中文）](https://developers.openai.com/zh-Hans/api/docs/guides/function-calling) | `tool_calls` 是模型发出的请求，执行在你的应用里               |
+| 应用端解析函数名和入参、再发起第二次调用   | [阿里云百炼：Function Calling](https://help.aliyun.com/zh/model-studio/qwen-function-calling)      | 工具输出放进 `role=tool` 之后，模型才做自然语言总结           |
+| 本仓库实际打的协议字段                     | [DeepSeek Tool Calls](https://api-docs.deepseek.com/zh-cn/guides/tool_calls)                       | `tools` / `tool_calls` / `finish_reason` 在 JSON 里的位置 |
+| Java 里菜单怎么挂到方法上                  | [Spring AI Tool Calling](https://docs.spring.io/spring-ai/reference/api/tools.html)                | `@Tool` 是菜单，`.tools()` 声明这次请求带上哪些方法         |
 
 按天打开哪一篇、看完立刻改哪段代码，仍以 [resources.md#stage-2](resources.md#stage-2) 和 [stage-2.md](stage-2.md) 为准。上面这五篇只负责建立「这项技术干什么」。
 
@@ -458,12 +458,12 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 **知识完成项**：
 
-- [ ] K14 LangChain4j `@Tool` + `@P`
-- [ ] K15 AiServices ≈ Feign + 拦截器
+- [X] K14 LangChain4j `@Tool` + `@P`
+- [X] K15 AiServices ≈ Feign + 拦截器
 
 **操作完成项**：
 
-- [ ] D6 `【写后端】` 全部完成判定（`POST /api/stage/02/chat-lc4j` 对 Q1 能答对；两套注解不混类）
+- [X] D6 `【写后端】` 全部完成判定（`POST /api/stage/02/chat-lc4j` 对 Q1 能答对；两套注解不混类）
 
 ---
 
@@ -505,18 +505,18 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 **知识完成项**：
 
-- [ ] K8 多 Tool 选择（与 T2 共用）
-- [ ] K9 选择策略：少而精、互斥、禁止写工具
-- [ ] K10 Trace：toolName / args / latency / success
-- [ ] K11 错误处理：not_found 回传模型
-- [ ] K19 Tool 失败四种
+- [X] K8 多 Tool 选择（与 T2 共用）
+- [X] K9 选择策略：少而精、互斥、禁止写工具
+- [X] K10 Trace：toolName / args / latency / success
+- [X] K11 错误处理：not_found 回传模型
+- [X] K19 Tool 失败四种
 
 **操作完成项**：
 
-- [ ] D3 `【调用后端】` 「改库存 999」后 `/store` 仍是 10
-- [ ] D4 `【写后端】` 全部完成判定（Q3 有两行 toolsCalled；ORD-9999 不编造）
-- [ ] D9 `【调用后端】` 全部完成判定（四种失败都打过）
-- [ ] 笔记 §9 「多工具 / 策略 / 错误 / 失败」行已填
+- [X] D3 `【调用后端】` 「改库存 999」后 `/store` 仍是 10
+- [X] D4 `【写后端】` 全部完成判定（Q3 有两行 toolsCalled；ORD-9999 不编造）
+- [X] D9 `【调用后端】` 全部完成判定（四种失败都打过）
+- [X] 笔记 §9 「多工具 / 策略 / 错误 / 失败」行已填
 
 ---
 
@@ -550,19 +550,19 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 **知识完成项**：
 
-- [ ] K16 Spring AI vs LangChain4j 对照（≥5 行）
-- [ ] K20 与阶段 3 的边界
+- [X] K16 Spring AI vs LangChain4j 对照（≥5 行）
+- [X] K20 与阶段 3 的边界
 
 **操作完成项**：
 
-- [ ] D7 `【调用后端】` 全部完成判定（Q1/Q3 两边各 2 次）
-- [ ] D10 `【只读】` 完成判定全部打勾
-- [ ] `【只读】` 笔记 §9 至少 8 行有数据
-- [ ] `【只读】` 结论 3 条已按手册 Day 10 模板填空
+- [X] D7 `【调用后端】` 全部完成判定（Q1/Q3 两边各 2 次）
+- [X] D10 `【只读】` 完成判定全部打勾
+- [X] `【只读】` 笔记 §9 至少 8 行有数据
+- [X] `【只读】` 结论 3 条已按手册 Day 10 模板填空
 
 **加分（不挡 S2-T5 打勾）**：
 
-- [ ] `【写后端·加分】` 前端 `tool-use` 菜单接通，或 `demos/02-tool-use/` Python 对照
+- [X] `【写后端·加分】` 前端 `tool-use` 菜单接通，或 `demos/02-tool-use/` Python 对照
 
 ---
 
@@ -596,12 +596,12 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 **知识完成项**：
 
-- [ ] K12 工具入参必须本地校验
-- [ ] K13 DeepSeek strict ≠ 应用侧免检
+- [X] K12 工具入参必须本地校验
+- [X] K13 DeepSeek strict ≠ 应用侧免检
 
 **操作完成项**：
 
-- [ ] D5 `【写后端】` 全部完成判定（ABC / 无单号不当成 PAID；未改 base-url）
+- [X] D5 `【写后端】` 全部完成判定（ABC / 无单号不当成 PAID；未改 base-url）
 
 ---
 
@@ -634,12 +634,12 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 **知识完成项**：
 
-- [ ] K17 上下文缓存：只匹配前缀
-- [ ] K18 成本：schema 放最前；看 cache hit
+- [X] K17 上下文缓存：只匹配前缀
+- [X] K18 成本：schema 放最前；看 cache hit
 
 **操作完成项**：
 
-- [ ] D8 全部完成判定（连续两次相同前缀；§9 缓存行有 hit 数字，含 0）
+- [X] D8 全部完成判定（连续两次相同前缀；§9 缓存行有 hit 数字，含 0）
 
 ---
 
@@ -871,6 +871,6 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 | 2026-08-18 | 阶段 2–6       | 任务预先编成 S2-T*～S6-T*；详案进入该阶段时按阶段 1**「告诉他做什么」** 样板展开，不要写成自测题                                           | 阶段 1 三份文档                                                                 |
 | 2026-09-10 | 阶段 2          | 新建 stage-2.md（S2-T1～T7 + D/K）；产出统一后端 stage02                                                                                   | 阶段 1                                                                          |
 | 2026-09-10 | 阶段 2 整合     | 将 tool-use.md 并入 stage-2.md：写代码日历、示例效果、前后端说明、§9 单文件学习                                                           | stage-2.md                                                                      |
-| 2026-11-05 | 阶段 2          | 任务清单前补「这项技术是干什么的」：一次请求里谁点菜、谁执行、结果如何回到回答，并挂概念向官方说明                                          | 本节                                                                            |
+| 2026-11-05 | 阶段 2          | 任务清单前补「这项技术是干什么的」：一次请求里谁点菜、谁执行、结果如何回到回答，并挂概念向官方说明                                         | 本节                                                                            |
 
 阶段 3 起每次改造时追加一行。
