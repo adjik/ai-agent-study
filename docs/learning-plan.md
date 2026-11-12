@@ -2,7 +2,7 @@
 
 > 适用人群：资深 Java Web 后端工程师（Spring Boot / Dubbo / MySQL / Redis 生态），零 AI 基础 | 环境：macOS | 更新日期：2026-09-10
 > 配套资料见 [resources.md](resources.md)，每个阶段的产出落地在 `demos/` 对应目录。
-> **怎么判定一项任务完成**：看本节「阶段文档三层约定」。阶段 1、阶段 2 已按此拆完；阶段 3 起进入时按同样方式改造。
+> **怎么判定一项任务完成**：阶段 1、阶段 2 看「阶段文档三层约定」。阶段 3 要掌握的知识点在本文件，每天的博客、代码和页面步骤在 [stage-3.md](stage-3.md)。阶段 4 起再按三层约定改造。
 
 ---
 
@@ -48,7 +48,9 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 ---
 
-## 阶段文档三层约定（后续阶段一律按此改造）
+## 阶段文档三层约定（阶段 1、2，以及阶段 4 起）
+
+阶段 3 不另拆任务号、操作号、知识号。要掌握的点在下面「阶段 3」一节；每天读什么、写什么代码、页面上会看到什么，在 [stage-3.md](stage-3.md)。
 
 每一阶段拆成三份文档，**编号一一对应**。不要只打总计划的勾、也不要只跑代码不记知识。
 
@@ -65,7 +67,7 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 3. 只跑 prompt、笔记里 K 项没打勾 → 任务不算完成。
 4. 对照实验表（笔记文末）没按手册填、结论三条模板没填完 → 该阶段不算完成。
 
-**进入阶段 N（N≥2）的第一件事**（改造清单，阶段 1 已做完可当样板）：
+**进入阶段 N（N≥4）的第一件事**（改造清单，阶段 1 已做完可当样板；阶段 3 已按天写在本文件，跳过这张清单）：
 
 1. 把本文件该阶段每条任务编成 `S{N}-T*`，每条写上「知识完成项 / 操作完成项」。
 2. 新建或补全 `docs/stage-N.md`：按天拆成 `D{天}-O*`，每天有「完成判定」。
@@ -75,6 +77,7 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 阶段 1 样板：任务在下面 S1-T1～T7 → 操作 [stage-1.md](stage-1.md) → 知识 [prompt-engineering.md](../notes/prompt-engineering.md)。
 阶段 2 样板：S2-T1～T7 → 整合文档 [stage-2.md](stage-2.md)（操作 + 必知 K* + §9 对照表，一份读完）。
+阶段 3：知识点在本文件，10 天操作在 [stage-3.md](stage-3.md)。页面路径与 `demos/frontend/demos.config.ts` 里「Agent 核心」菜单一致。
 
 ---
 
@@ -660,40 +663,133 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 ---
 
-## 阶段 3：Agent 核心概念与框架（3-4 周）
+## 阶段 3：Agent 核心概念与框架（10 天）
 
-> **进入本阶段第一件事**：按「三层约定」新建 `docs/stage-3.md` + `notes/agent-core.md`，把下面每条 S3-T 拆成每天 `D*-O*` 和知识 `K*`。未完成改造，不要开始写 demo。
-> 当前完成判据：本段 S3-T1～T7 全部打勾 + 手写 loop 可运行。
+> 每天读哪篇、写哪些类、在哪个页面看什么结果，写在 [stage-3.md](stage-3.md)。本节只写这一阶段在学什么、需要了解什么、必须掌握什么。
 
-**目标**：理解 Agent 本质（LLM + 规划 + 工具 + 记忆 + 执行循环），**先手写一个极简 Agent 循环，再用 Java 框架实现**。
+Java 写在统一后端 `demos/backend` 的 `stage03` 包。订单和库存沿用阶段 2 的内存夹具：**ORD-1001 已支付**，**SKU-88 在 WH-A 可用数量是 10**。事实仍从这两张表来。本阶段多出来的是：循环的每一轮能在页面上看见，下一句话能接着上一句，下一步可以由代码写死，以及循环在什么条件下停住。
 
-- [ ] **S3-T1** Agent 是什么：ReAct（思考→行动→观察→再思考）、Agent Loop、规划策略（ReAct / Plan-and-Execute / Reflection）
-  - 知识 / 操作：待拆进 `notes/agent-core.md` + `docs/stage-3.md`
-- [ ] **S3-T2** 手写极简 Agent 循环（纯 Java HTTP Client + JSON，不依赖 AI 框架）——50~100 行实现「LLM 选工具→执行→回传→再决策」
-  - 知识 / 操作：待拆进 stage-3 + agent-core 笔记（这是本阶段里程碑）
-- [ ] **S3-T3** Spring AI 版 Agent：`ChatClient` + `ToolCallback`；`ChatMemory` / Redis；`@Service` 包装、`@Scheduled` 触发
-  - 知识 / 操作：待拆进 stage-3 + agent-core 笔记
-- [ ] **S3-T4** LangChain4j 版 Agent：`AiServices` 接口式；`MessageWindowChatMemory`；RAG 预览
-  - 知识 / 操作：待拆进 stage-3 + agent-core 笔记
-- [ ] **S3-T5** Spring AI Alibaba 版 Agent（进阶）：Graph 工作流；Supervisor 多 Agent 预览
-  - 知识 / 操作：待拆进 stage-3 + agent-core 笔记
-- [ ] **S3-T6** Python 对照（了解即可）：LangGraph 的 StateGraph / 节点 / 边 / 条件路由；CrewAI 20 行体验
-  - 知识 / 操作：待拆进 stage-3 + agent-core 笔记（不要求 Java 以外的交付）
-- [ ] **S3-T7** Agent 失败模式：死循环、工具调用错误、上下文爆炸、安全边界
-  - 知识 / 操作：待拆进 stage-3 + agent-core 笔记
+**目标**：能解释一次 Agent 运行里谁在决策、谁在执行、状态存在哪、为什么会停。先用 JDK `HttpClient` + Jackson 自己写循环，再在 Spring AI、LangChain4j 里认出同一条循环，最后看固定流程图和停止条件。
 
-**产出**：
+**留到后面阶段的事**：文档切块和向量检索（阶段 4）、MCP 与多个 Agent 互相派活（阶段 5）、轨迹落 MySQL。本阶段轨迹放在响应 JSON 的 `steps` 里，记忆仓库默认在进程内存。
 
-- `demos/03-agent-core-java/` —— 手写 agent loop（纯 Java） + Spring AI 版 agent + LangChain4j 版 agent
-- 可选：Python 版 LangGraph demo（对照理解）
+### 这一阶段在学什么
 
-**参考**：
+阶段 2 已经能查订单、查库存。`ChatClient.call()` 和 `AiServices` 在方法内部把「点菜 → 执行 → 再问」跑完，页面只拿到最后一句和 `toolsCalled`。阶段 3 要你看见并握住这个循环：每一轮的决定、工具结果、还要不要再来一轮，都是你的程序状态。
 
-- Spring AI 官方文档：ChatClient、ChatMemory、Tool Calling
-- LangChain4j 官方文档：AiServices、ChatMemory
-- Spring AI Alibaba 文档：Graph 工作流
-- Anthropic：Building effective agents（工程实践文章，**必读**，语言无关）
-- [Microsoft Spring AI for Beginners](https://github.com/microsoft/Spring-AI-for-Beginners)
+用已经会的后端来对照：
+
+| 你已经会的 | 在 Agent 循环里 | 作用 |
+| --- | --- | --- |
+| `while` 拉任务直到完成或超时 | Agent Loop | 模型还在点菜就再跑一轮；写出最终句子或触到上限就停 |
+| 一次 RPC 的请求 / 响应日志 | `steps` | 每一轮留下谁发起、选了哪个工具、工具返回了什么 |
+| 按 sessionId 存放的会话 | `conversationId` + ChatMemory | 模型本身不记得上一句，下一次请求要把历史再带上 |
+| 接口上的只读 / 需审批 | 工具菜单 + 确认停点 | 模型可以要求调用，写操作仍由你的代码决定是否真的执行 |
+| 状态机的边 | Graph 的节点和边 | 下一步走哪由 Java 写死，模型只负责节点内部的那一次生成 |
+
+一次「能不能发货」在循环里是这样走的。这三轮就是后面要掌握的 ReAct：
+
+| 轮次 | 模型看到什么 | 模型返回什么 | Java 做什么 |
+| --- | --- | --- | --- |
+| 1 | 问句 + 工具菜单 | `tool_calls`：`getOrder(ORD-1001)` | 查表，得到已支付 |
+| 2 | 上一轮的点菜 + 已支付 | `tool_calls`：`getInventory(SKU-88, WH-A)` | 查表，得到 10 |
+| 3 | 两段工具结果 | 给人看的句子，不再点菜 | 把 `steps` 和这句话返回页面 |
+
+做完 [stage-3.md](stage-3.md) 的 10 天，应能对着页面讲清四件事：
+
+- 哪一轮是模型点菜、哪一轮是 Java 查表、哪一轮是给人看的句子
+- 同一个 `conversationId` 让第二句「刚才那张单」不用再报单号；窗口变小之后，最早的内容为什么消失
+- 三种规划各自把「下一步」交给了谁
+- 循环如何停住：步数上限、菜单里没有写方法、退款要等人点确认
+
+### 需要了解的
+
+这些内容建立地图即可。10 天里会在阅读或页面字段中碰到它们，不要求本阶段单独做出可运行版本。
+
+**工作流和 Agent 是两种控制权。** 工作流的下一跳写在代码里，同一类单据每次走过的节点稳定。Agent 的下一跳由模型在循环里决定，步数随问题变化。Anthropic 的工程文章把这件事说成：能用一次模型调用解决的，就不要先做循环；路径必须稳定时用工作流；步数事先写不死时再用 Agent。阶段 3 两种都会碰到：手写循环和规划页是 Agent，固定图是工作流。
+
+**规划、记忆、工具是三块积木。** 工具是阶段 2 已经接上的查表方法。记忆是按会话把消息再送回模型。规划是「下一步谁来定」。Lilian Weng 的综述用这三块描述自主 Agent。本阶段把三块拆开看：第 2～4 天主要是工具循环，第 5～7 天加上记忆，第 8～9 天比较规划和图。
+
+**框架里的循环和手写循环是同一件事。** Spring AI 的 `ToolCallingAdvisor`、LangChain4j 的 `AiServices` 默认把 `while` 藏在一次 `call()` 里。关掉自动执行之后，`ToolCallingManager` 只负责「按点菜单执行 Java」，轮次仍由你的循环掌握。手写那天用 JDK `HttpClient`，是为了先看见 JSON，而不是为了替换 Spring。
+
+**记忆有策略，也有仓库。** 窗口策略决定留最近多少条。仓库决定这些条存在堆里、Redis 还是 JDBC。本阶段默认仓库在内存，用来看懂「进程一停，会话就没了」。Redis 实现知道换的是仓库即可。向量记忆把旧对话做成可检索片段，那是阶段 4 的事，和窗口不是同一层。
+
+**图运行时和 Python 框架共享一组词。** Spring AI Alibaba 的 `StateGraph`、节点、边、全局状态，对应 LangGraph 里的同名概念。LangGraph、CrewAI 这一阶段只建立这个对应，不交 Python 作业。多个 Agent 互相派活（Supervisor）留在阶段 5；固定图里的条件边已经足够说明「分支可以由 Java 读状态来决定」。
+
+**循环必须有停法。** 最大步数、菜单里不存在的方法、写操作前的人工确认，分别对应超时、未暴露的接口、审批流。模型可以一直点菜，停不停由你的 `while` 和工具注册决定。
+
+### 要掌握的知识点
+
+下面每条都要能讲出「它管哪一段」。页面上的字段名和类名以 [stage-3.md](stage-3.md) 为准。
+
+#### 循环与协议
+
+**Agent。** 模型在一个循环里自己决定要不要调工具、调哪一个、看到结果后还要不要再调。路径不事先写死。适合「能不能发货」这种步数随问句变化的问题。
+
+**Workflow（固定工作流）。** 节点和边写在 Java 里。模型只完成节点内部的生成，例如把已经查到的数量写成一句话。适合每单都必须查库存的审核。代价是即使用户只问订单状态，边仍会把库存查出来。
+
+**Agent Loop。** 一段 `while`：响应里还有工具调用，就执行并把结果塞回消息列表，再请求模型；没有工具调用，或到达上限，就退出。阶段 2 的自动顾问是这段循环的隐藏实现。
+
+**`finish_reason=tool_calls`。** 这一轮模型停在「等你执行」。这一轮的正文还不是给用户的答案。手写循环用它决定要不要进入下一轮。
+
+**`role=tool`。** 你把查表结果交回模型的那条消息。没有它，下一轮模型仍然不知道订单是已支付。
+
+**ReAct。** 边想边做。每一轮先决定一个动作，看到观察结果再决定下一动作。上面的三轮表就是 ReAct。页面上的证据是 `steps` 按时间变长，而不是一开始就有一份完整计划。
+
+**Plan-and-Execute。** 先单独要一份步骤清单，再按清单执行。清单生成时还没有查表结果，所以它不会因为中途发现库存为 0 而自己改写，除非再加一轮规划。页面上的证据是执行前就出现的 `plan`。
+
+**Reflection。** 先出草稿，再用另一次模型调用按写死的标准打回重写，例如不超过 40 字且必须带单号。多一次调用换的是句子，不是再查一次库。页面上的证据是 `draft` 和更短的 `answer`。
+
+**`internalToolExecutionEnabled` / 关掉自动顾问。** Spring AI 默认在 `call()` 里自己跑循环。自己写 `while` 的接口要把自动顾问关掉，否则一次请求里有两层循环。
+
+**`ToolCallingManager`。** Spring 提供的「按模型点的菜单执行 Java 方法」。手动循环用它执行工具，避免自己解析参数再反射。它不负责决定还要不要再问模型，那是你的 `while`。
+
+#### 轨迹
+
+**`steps`。** 返回给页面的轨迹，一轮一条：轮次、结束原因、工具名、参数、观察结果、耗时。它代替终端日志，让调用方看见查表发生过。
+
+**`observation`。** 工具方法的返回。`PAID` 表示查到了；`not_found` 表示单号合法但表里没有，所以有一次 `getOrder`；`invalid_argument` 表示格式在进表之前被挡住，不应出现夹具里的已支付。
+
+**`stopReason`。** 循环为什么停。`final` 表示模型不再点菜。`max_steps` 表示到了上限，后面的工具还没跑。`waiting_human` 表示停在确认，写方法还没有执行。
+
+#### 记忆
+
+**ChatMemory。** 按 `conversationId` 存消息，下一次请求再取出来拼进提示。模型权重里没有这场会话。第二句「刚才那张单」能对上 ORD-1001，是因为第一句还在这个 ID 下面。
+
+**`MessageChatMemoryAdvisor`。** 挂在 `ChatClient` 上的顾问，负责取出并写回记忆。每次调用必须带 `ChatMemory.CONVERSATION_ID`，缺了会直接抛异常，没有默认会话。
+
+**窗口记忆。** 只保留最近 N 条。更早的用户句不会进入下一次请求，所以窗口大小决定模型还能不能提起「第一个记号」，不只是省 token。
+
+**工具消息默认不进记忆。** Spring AI 默认只把最终的用户句和最终回答写入记忆，循环中的工具消息不写。下一句若问「你调了哪个函数」，模型常常不知道，因为最终回答里不一定写出函数名。
+
+**记忆放进循环。** 把记忆顾问的顺序放到工具顾问内侧，并调用 `disableInternalConversationHistory()`，关掉工具顾问自己维护的那份内部历史。这样每一轮的工具结果才会进同一个 `conversationId`。两套历史同时写，会重复或互相覆盖。
+
+**`MessageWindowChatMemory`。** LangChain4j 的窗口实现，按条数裁。系统消息保留。若带工具调用的模型消息被裁掉，紧跟的工具结果一并裁掉，避免厂商拒绝「只有结果、没有对应调用」的消息。窗口设成 2 时，发货那种多轮工具调用会把库存数字裁出下一次提示。
+
+**`ChatMemoryRepository`。** 消息真正落地的地方。默认 `InMemoryChatMemoryRepository` 在堆里，进程一停 key 就没了。换成 Redis 或 JDBC 之后，同一个 `conversationId` 在重启后还能取出。策略类不用改。
+
+#### 图与停止条件
+
+**StateGraph / Node / Edge / OverAllState。** 图用来声明工作流。节点是一步（查订单、查库存、写句子）。边是下一步。`OverAllState` 是节点之间传递的 Map，库存数量和分支名都放在这里。
+
+**条件边。** 判断函数是 Java，读状态里的字段。已支付且可用数量大于 0 走向可发，否则走向不可发。模型不修改这条边，所以业务规则不会随措辞漂移。
+
+**最大步数。** `while` 的上限。发货至少要「查订单、查库存、写句子」三轮，上限设为 2 时请求会带着 `max_steps` 返回，回答可以是不完整的。这和给批处理加超时是同一类约束。
+
+**人在环路上。** 写操作执行前把状态置为 `waiting_human`，页面点确认才真正调用。模型点了退款，Java 在审批前不下厨。和写接口在落库前返回「待审批」是同一件事。
+
+**只读菜单。** 没有注册的方法就不会执行。用户说「把库存改成 999」时，夹具里的 10 保持不变。菜单说明要写互斥，否则模型会拿查订单的工具去答库存。
+
+### 和前后阶段怎么接
+
+| 阶段 | 已经握住的 | 阶段 3 补上的 |
+| --- | --- | --- |
+| 阶段 1 | 提示词决定怎么说、输出长什么样 | 事实仍不写进提示词 |
+| 阶段 2 | 模型点菜，Java 查表，框架把循环藏在一次调用里 | 把轮次、会话、规划、停点放到页面 JSON 里 |
+| 阶段 4 | — | 窗口记忆继续留用；按语义检索旧对话和文档再做 |
+| 阶段 5 | — | 固定图的边继续留用；多个 Agent 派活、MCP 再做 |
+
+操作按 [stage-3.md](stage-3.md) 的 10 天执行。10 天都勾完，阶段 3 完成。
 
 ---
 
@@ -801,7 +897,7 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 | 0 环境准备         | 1 周                 | Spring AI + DeepSeek 跑通第一个 LLM 调用      |
 | 1 提示词工程       | 1-2 周               | BeanOutputConverter 稳定输出结构化 JSON       |
 | 2 Function Calling | 2-3 周               | @Tool 注解式工具调用跑通完整循环              |
-| 3 Agent 框架       | 3-4 周               | 手写 agent loop + Spring AI/LangChain4j agent |
+| 3 Agent 框架       | 10 天                | 控制台「Agent 核心」跑通：手写 steps、会话窗口、三种规划、固定图、停止条件 |
 | 4 RAG              | 3-4 周               | LangChain4j 文档问答准确率达标                |
 | 5 工程化           | 2-3 周               | Spring AI MCP Server + 自动化评估             |
 | 6 落地项目         | 4-6 周               | 完整 Spring Boot 项目交付                     |
@@ -819,7 +915,7 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 | 1    | Spring AI 初体验       | 创建 Spring Boot 4.x 项目，Spring AI ChatClient 调 DeepSeek，跑通问答/流式/JSON 输出                      | Spring AI + DeepSeek                |
 | 1b   | 提示词工程（阶段 1）   | 按 S1-T1～T7 打勾：D0–D7 操作 + K1–K20 知识；里程碑`.entity(TicketTriage)`（[stage-1.md](stage-1.md)） | Spring AI`.param` / `.entity`   |
 | 2    | Tool Calling（阶段 2） | 按 S2-T1～T7 打勾：D0–D10 操作 + K1–K20 知识；里程碑 `@Tool` 查订单/库存（[stage-2.md](stage-2.md)）   | Spring AI @Tool / LangChain4j @Tool |
-| 3    | 最小 Agent 闭环        | 用户输入 → 任务理解 → 工具选择 → 执行 → 生成 → 落 Trace（手写 + 框架各一版）                         | Spring AI ChatClient + ToolCallback |
+| 3    | Agent 循环（阶段 3）   | 按 [stage-3.md](stage-3.md) 的 10 天：手写循环、会话窗口、三种规划、固定图和停止条件                     | 手写 loop + Spring AI ChatMemory    |
 | 4    | Agent 运行时状态设计   | 设计 run/step/tool_call/trace 表结构（MyBatis Plus + MySQL）——后端基本功直接套用                        | MyBatis Plus + MySQL                |
 | 5-6  | RAG                    | LangChain4j 文档问答 Demo；加元数据过滤、引用溯源、ACL 权限过滤                                           | LangChain4j + Redis/pgvector        |
 | 7    | 记忆                   | ChatMemory 短期/长期记忆设计，Redis 持久化                                                                | LangChain4j ChatMemory + Redis      |
@@ -829,7 +925,7 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 | 11   | 项目包装               | 输出简历/面试可用项目（建议"技术文档问答 + 工具调用"系统）                                                | 全栈 Java                           |
 | 12   | 对比扩展               | 横向看 LangGraph(Python)、CrewAI 的取舍，理解 Java 栈的定位和边界                                         | Python 对照阅读                     |
 
-> 12 周是压缩轨。阶段 1 记为 **第 1b 周**：先动手改 prompt，课和书不进验收。阶段 2 记为 **第 2 周**：按 [stage-2.md](stage-2.md) D0 先直连看 `tool_calls`，再写 `@Tool`。不要跳过阶段 1 对照实验直接写工具。
+> 12 周是压缩轨。阶段 1 记为 **第 1b 周**：先动手改 prompt，课和书不进验收。阶段 2 记为 **第 2 周**：按 [stage-2.md](stage-2.md) D0 先直连看 `tool_calls`，再写 `@Tool`。阶段 3 的正本是 [stage-3.md](stage-3.md) 的 10 天。第 4 周的 MySQL 轨迹表、第 7 周的向量长期记忆不在阶段 3 的验收里。
 
 **简历表述建议**：写"基于 Spring AI + LangChain4j 设计并实现了含文档解析、向量检索（Redis/pgvector）、Tool Calling、Spring Security 权限过滤、Langfuse 链路追踪与 JUnit 自动化评估的企业级 Agent 问答系统"，而非"用 LLM 做了个问答"。**你不需要说自己"转行 Python"，你说的是"我把 10 年 Java 工程经验带到了 AI Agent 领域"。**
 
@@ -872,5 +968,6 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 | 2026-09-10 | 阶段 2          | 新建 stage-2.md（S2-T1～T7 + D/K）；产出统一后端 stage02                                                                                   | 阶段 1                                                                          |
 | 2026-09-10 | 阶段 2 整合     | 将 tool-use.md 并入 stage-2.md：写代码日历、示例效果、前后端说明、§9 单文件学习                                                           | stage-2.md                                                                      |
 | 2026-11-05 | 阶段 2          | 任务清单前补「这项技术是干什么的」：一次请求里谁点菜、谁执行、结果如何回到回答，并挂概念向官方说明                                         | 本节                                                                            |
+| 2026-11-12 | 阶段 3          | 知识点留在本文件并写细；10 天的博客、要写的代码和页面结果改到 stage-3.md，博客放进对应的那一天                                   | [stage-3.md](stage-3.md)                                                        |
 
-阶段 3 起每次改造时追加一行。
+阶段 4 起每次改造时追加一行。

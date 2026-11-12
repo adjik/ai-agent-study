@@ -1,11 +1,11 @@
 # AI Agent 学习资料汇总（Java 主线版）
 
 > 更新日期：2026-09-10（信息已核对为 2025-2026 最新）
-> 配套路线见 [learning-plan.md](learning-plan.md)；阶段 1 见 [stage-1.md](stage-1.md)；阶段 2 见 [stage-2.md](stage-2.md)
+> 配套路线见 [learning-plan.md](learning-plan.md)；阶段 1 见 [stage-1.md](stage-1.md)；阶段 2 见 [stage-2.md](stage-2.md)；阶段 3 的每天阅读写在 [stage-3.md](stage-3.md) 当天小节里
 
 **怎么用这份清单**：每个阶段 **先动手、再看博客、卡住才查官方文档**。长课程和书放在文末当手册，**不进阶段验收**。阶段专题（文末）才是当天要打开的东西。
 
-**目录**：[框架选型](#sec-stack) · [MCP](#sec-mcp) · [Demo 清单](#sec-demos) · [课程](#sec-courses) · [书籍](#sec-books) · [开源仓库](#sec-repos) · [落地路线图](#sec-roadmap) · **[阶段 1：提示词工程](#stage-1)** · **[阶段 2：Tool Use](#stage-2)**
+**目录**：[框架选型](#sec-stack) · [MCP](#sec-mcp) · [Demo 清单](#sec-demos) · [课程](#sec-courses) · [书籍](#sec-books) · [开源仓库](#sec-repos) · [落地路线图](#sec-roadmap) · **[阶段 1：提示词工程](#stage-1)** · **[阶段 2：Tool Use](#stage-2)** · 阶段 3 每天的博客在 [stage-3.md](stage-3.md)
 
 ---
 
@@ -305,3 +305,4 @@ curl -sS http://localhost:8080/api/stage/02/chat \
 - 手写 Agent Loop、ChatMemory、RAG、MCP 文档（阶段 3～5）
 - 吴恩达 Agentic AI 课、Chip Huyen 全书
 - 把库存改成真 MySQL / Dubbo（阶段 6）；本阶段内存 Store 即可
+

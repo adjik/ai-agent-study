@@ -377,13 +377,16 @@ export const DEMO_SERVICES: DemoService[] = [
     id: 'agent-core',
     stage: '03',
     title: 'Agent 核心',
-    subtitle: '手写 Loop + Spring AI / LangChain4j',
+    subtitle: '手写 Loop、记忆、规划、固定图',
     codeDir: 'demos/backend/src/main/java/com/example/demos/stage03',
     status: 'planned',
     endpoints: [
       planned('agent-core', 'loop', '手写 Agent Loop', '/stage/03/loop'),
       planned('agent-core', 'spring-ai', 'Spring AI Agent', '/stage/03/spring-ai'),
       planned('agent-core', 'langchain4j', 'LangChain4j Agent', '/stage/03/langchain4j'),
+      planned('agent-core', 'plan', '规划对照', '/stage/03/plan'),
+      planned('agent-core', 'graph', '固定工作流', '/stage/03/graph'),
+      planned('agent-core', 'guard', '停止与边界', '/stage/03/guard'),
     ],
   },
   {
