@@ -35,6 +35,18 @@ const PRESETS: QuestionPreset[] = [
     text: 'ORD-1001 能不能发货？先查订单再查对应库存。',
     hint: 'steps 至少 3 条。前两条 toolName 依次是 getOrder、getInventory，库存观察里可用数量是 10。最后一条不再点菜，stopReason 为 final。',
   },
+  {
+    id: 'missing',
+    label: '查无此单',
+    text: 'ORD-9999 什么状态？',
+    hint: '单号符合 ORD-数字，所以会查表。观察是 not_found，并且这一步有 latencyMs。回答不要把这笔说成已支付。夹具里仍然有 ORD-1001 的 PAID。',
+  },
+  {
+    id: 'bad',
+    label: '格式不对',
+    text: '查订单 ABC 的状态',
+    hint: 'ABC 不是 ORD-数字。要么没有工具步骤，要么观察是 invalid_argument，并且没有拿 ABC 去对订单表。回答里不出现夹具中的 PAID。',
+  },
 ]
 
 const route = useRoute()
@@ -82,6 +94,24 @@ function submit() {
 function toolLabel(step: StepRecord) {
   return step.toolName ? step.toolName : '不再点菜'
 }
+
+/**
+ * 从观察 JSON 里认出第 3 天的两种错误。
+ * not_found：查过表，业务未命中。invalid_argument：格式拦截，查表没有发生。
+ * 命中时返回空串，表格只展示原始 JSON。
+ */
+function observationKind(step: StepRecord): '' | 'not_found' | 'invalid_argument' {
+  if (!step.observation) {
+    return ''
+  }
+  if (step.observation.includes('"invalid_argument"')) {
+    return 'invalid_argument'
+  }
+  if (step.observation.includes('"not_found"')) {
+    return 'not_found'
+  }
+  return ''
+}
 </script>
 
 <template>
@@ -128,6 +158,27 @@ function toolLabel(step: StepRecord) {
         <span class="field-label">steps</span>
         <el-tag effect="plain">{{ steps.length }} 条</el-tag>
       </div>
+      <p class="field-label">夹具</p>
+      <p class="hint">
+        这是本次响应里的内存快照，用来对照观察。ORD-1001 应为 PAID，SKU-88 / WH-A 的可用数量应为 10。
+      </p>
+      <div class="fixture">
+        <el-tag
+          v-for="order in data.fixture.orders"
+          :key="order.orderId"
+          effect="plain"
+        >
+          {{ order.orderId }} {{ order.status }}
+        </el-tag>
+        <el-tag
+          v-for="row in data.fixture.inventory"
+          :key="row.sku + row.warehouse"
+          type="success"
+          effect="plain"
+        >
+          {{ row.sku }} / {{ row.warehouse }} 可用 {{ row.available }}
+        </el-tag>
+      </div>
       <p class="field-label">回答</p>
       <p class="answer">{{ data.answer }}</p>
       <p class="field-label">steps</p>
@@ -138,7 +189,23 @@ function toolLabel(step: StepRecord) {
           <template #default="{ row }">{{ toolLabel(row) }}</template>
         </el-table-column>
         <el-table-column prop="arguments" label="参数" min-width="180" />
-        <el-table-column prop="observation" label="观察" min-width="240" />
+        <el-table-column label="观察" min-width="280">
+          <template #default="{ row }">
+            <el-tag
+              v-if="observationKind(row)"
+              size="small"
+              :type="observationKind(row) === 'invalid_argument' ? 'warning' : 'info'"
+              effect="plain"
+              class="obs-tag"
+            >
+              {{ observationKind(row) }}
+            </el-tag>
+            <span>{{ row.observation }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="latencyMs" width="110">
+          <template #default="{ row }">{{ row.latencyMs ?? '—' }}</template>
+        </el-table-column>
       </el-table>
       <JsonPanel :value="data" />
     </template>
@@ -185,5 +252,14 @@ function toolLabel(step: StepRecord) {
 .elapsed {
   font-size: 12px;
   color: #94a3b8;
+}
+.fixture {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.obs-tag {
+  margin-right: 8px;
 }
 </style>

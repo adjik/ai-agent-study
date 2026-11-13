@@ -16,11 +16,14 @@ package com.example.demos.stage03.loop;
  * @param finishReason 点菜记录固定写 {@code tool_calls}。收口记录抄厂商的 {@code finish_reason}，常见 {@code stop}
  * @param toolName     模型点的函数名。收口轮为 null
  * @param arguments    模型给出的参数原文，字符串形式的 JSON。收口轮为 null
- * @param observation  Java 查表得到的 JSON。这是事实来源：PAID 和 available=10 都在这里，不在 answer 的措辞里
+ * @param observation  Java 查表得到的 JSON。这是事实来源：PAID、not_found、invalid_argument 都在这里，不在 answer 的措辞里。
+ *                     {@code not_found} 表示单号合法但表里没有；{@code invalid_argument} 表示格式在进表之前被挡住
+ * @param latencyMs    这一次 dispatch 的耗时，单位毫秒。只包查表和校验，不含模型 HTTP。收口轮没有查表，为 null
  */
 public record StepRecord(
         int round,
         String finishReason,
         String toolName,
         String arguments,
-        String observation) {}
+        String observation,
+        Long latencyMs) {}

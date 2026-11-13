@@ -8,8 +8,8 @@
 
 十天都勾完，阶段 3 才算做完。
 
-- [ ] 第 1 天 `【不写代码】` 看见被收起来的循环
-- [ ] 第 2 天 `【写代码】` 手写循环，一问一轮、一问多轮
+- [X] 第 1 天 `【不写代码】` 看见被收起来的循环
+- [X] 第 2 天 `【写代码】` 手写循环，一问一轮、一问多轮
 - [ ] 第 3 天 `【写代码】` 轨迹里能分清查无此单和格式不对
 - [ ] 第 4 天 `【写代码】` Spring AI 的循环交还给你
 - [ ] 第 5 天 `【写代码】` 会话能接上，窗口会忘掉
@@ -98,11 +98,11 @@ cd demos/frontend && npm run dev
 
 在 `com.example.demos.stage03.loop`：
 
-| 类 | 职责 |
-| --- | --- |
-| `HandWrittenAgentLoop` | JDK `HttpClient` + Jackson 调 DeepSeek。这个类里不调用 `ChatClient` |
-| `LoopController` | `POST /api/stage/03/loop`，入参 `question`、`maxSteps`（默认 4） |
-| `StepRecord` | 一轮一条：`round`、`finishReason`、`toolName`、`arguments`、`observation` |
+| 类                       | 职责                                                                                |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| `HandWrittenAgentLoop` | JDK `HttpClient` + Jackson 调 DeepSeek。这个类里不调用 `ChatClient`             |
+| `LoopController`       | `POST /api/stage/03/loop`，入参 `question`、`maxSteps`（默认 4）              |
+| `StepRecord`           | 一轮一条：`round`、`finishReason`、`toolName`、`arguments`、`observation` |
 
 循环里：
 
@@ -152,7 +152,6 @@ dispatch(name, args):
 
    - **你会看到**：`answer` 里是已支付。`stopReason` 为 `final`。`steps` 长度为 2。第 1 步 `finishReason=tool_calls`，`toolName=getOrder`，参数含 `ORD-1001`，`observation` 里有 `PAID`。第 2 步不再点菜。
    - **为什么**：第一轮只有问句和菜单，表在你的进程里，模型只能点菜。Java 写入 `PAID` 之后，第二轮才有事实，于是写成句子并停止。
-
 2. **怎么执行**：同一页只改问句，最大步数仍是 `4`，再点发送。
    **执行语句**：
 
@@ -219,7 +218,6 @@ dispatch("getOrder", orderId):
    ```
 
    - **你会看到**：观察含 `PAID`，并且这一步有 `latencyMs`。
-
 2. **怎么执行**：问句换成第二句，点发送。
    **执行语句**：
 
@@ -230,7 +228,6 @@ dispatch("getOrder", orderId):
 
    - **你会看到**：有一条 `getOrder`，观察是 `not_found`。回答不把这笔说成已支付。
    - **为什么**：单号格式合法，表里没有，所以查表发生了，结果是业务未命中。
-
 3. **怎么执行**：问句换成第三句，点发送。
    **执行语句**：
 
@@ -260,10 +257,10 @@ dispatch("getOrder", orderId):
 
 在 `com.example.demos.stage03.springai`：
 
-| 类 | 职责 |
-| --- | --- |
-| `SpringAgentLoop` | 关闭自动工具顾问；`while` 里用 `ToolCallingManager.executeToolCalls` 执行阶段 2 的查询工具；自己组装 `steps` |
-| `SpringAgentController` | `POST /api/stage/03/spring-ai`，入参先只要 `question`、`maxSteps`。会话字段第 5 天再加 |
+| 类                        | 职责                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `SpringAgentLoop`       | 关闭自动工具顾问；`while` 里用 `ToolCallingManager.executeToolCalls` 执行阶段 2 的查询工具；自己组装 `steps` |
+| `SpringAgentController` | `POST /api/stage/03/spring-ai`，入参先只要 `question`、`maxSteps`。会话字段第 5 天再加                       |
 
 这个类用 `ChatModel` 发请求，不再用第 2 天的 `HttpClient`。接通「Spring AI Agent」（`/demos/agent-core/spring-ai`）。
 
@@ -296,7 +293,6 @@ run(question, maxSteps):
    POST /api/stage/03/spring-ai
    {"question":"ORD-1001 能不能发货？先查订单再查对应库存。","maxSteps":4}
    ```
-
 2. **怎么执行**：打开 [手写 Agent Loop](http://localhost:5173/demos/agent-core/loop)，问句不变，点发送。
    **执行语句**：
 
@@ -359,7 +355,6 @@ run(question, conversationId, maxMessages, rememberToolTrace):
    POST /api/stage/03/spring-ai
    {"question":"ORD-1001 现在什么状态？","maxSteps":4,"maxMessages":20,"rememberToolTrace":false,"conversationId":"<这一会话的 id>"}
    ```
-
 2. **怎么执行**：不要点「新会话」。问句改成第二句，再点发送。`conversationId` 与上一句相同。
    **执行语句**：
 
@@ -370,7 +365,6 @@ run(question, conversationId, maxMessages, rememberToolTrace):
 
    - **你会看到**：第一句的 `steps` 是 `getOrder`，回答是已支付。第二句的 `steps` 是 `getInventory`，参数能对上 SKU-88 和 WH-A，数量是 10。两句的 `conversationId` 相同。`memoryMessages` 里看得到第一句。
    - **为什么**：第二句原文没有单号。记忆把第一句带进了第二次请求。
-
 3. **怎么执行**：点「新会话」（id 会变），只发送第二句。
    **执行语句**：
 
@@ -381,7 +375,6 @@ run(question, conversationId, maxMessages, rememberToolTrace):
 
    - **你会看到**：回答说不清是哪张单。不会把夹具里的 `PAID` 安到「刚才」上。
    - **为什么**：新的 `conversationId` 在仓库里是空的。
-
 4. **怎么执行**：再点「新会话」，窗口条数改成 `2`，「记住工具来回」保持关闭。按顺序点三次发送。
    **执行语句**：
 
@@ -402,7 +395,6 @@ run(question, conversationId, maxMessages, rememberToolTrace):
 
    - **你会看到**：第三句说不出 ALPHA。`memoryMessages` 里没有第一句。
    - **为什么**：每一轮至少写入用户句和模型回答，窗口只有 2 条时，最早那一轮被丢掉。第三次请求的提示里已经没有 ALPHA。
-
 5. **怎么执行**：点「新会话」，窗口调到 `20`，打开「记住工具来回」。先发送货问句，再发追问。两句 id 相同。
    **执行语句**：
 
@@ -467,7 +459,6 @@ AgentService:
    POST /api/stage/03/spring-ai
    {"question":"ORD-1001 现在什么状态？","maxSteps":4,"maxMessages":20,"rememberToolTrace":false,"conversationId":"<记下来的 id>"}
    ```
-
 2. **怎么执行**：在跑后端的终端按 `Ctrl+C` 停掉进程，再执行启动语句。浏览器不要点「新会话」，把会话 ID 填回刚才记下的值，问句换成第二句，点发送。
    **执行语句**：
 
@@ -483,7 +474,6 @@ AgentService:
 
    - **你会看到**：`memoryRepository` 仍是内存实现的类名。回答不知道「刚才」是哪张单。`memoryMessages` 为空。
    - **为什么**：仓库在堆里。浏览器还留着会话 ID，进程里这个 key 已经没了。换成 Redis 或 JDBC 仓库后，同一 key 在重启后仍能取出第一句。
-
 3. **怎么执行**：输入框留空，点「跑一次巡检」。
    **执行语句**：
 
@@ -513,10 +503,10 @@ AgentService:
 
 在 `com.example.demos.stage03.lc4j`：
 
-| 类 | 职责 |
-| --- | --- |
-| `Stage03Lc4jTools` | 使用 `dev.langchain4j.agent.tool.Tool`，与 Spring 的 `@Tool` 分属两个类。方法内部仍查阶段 2 的 Store |
-| `Stage03Assistant` | 一个接口，由 `AiServices` 生成实现 |
+| 类                      | 职责                                                                                                                                                                                      |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Stage03Lc4jTools`    | 使用 `dev.langchain4j.agent.tool.Tool`，与 Spring 的 `@Tool` 分属两个类。方法内部仍查阶段 2 的 Store                                                                                  |
+| `Stage03Assistant`    | 一个接口，由 `AiServices` 生成实现                                                                                                                                                      |
 | `Lc4jAgentController` | `POST /api/stage/03/langchain4j`。入参 `question`、`conversationId`、`maxMessages`。记忆用 `MessageWindowChatMemory`。响应含 `answer`、`conversationId`、`memoryMessages` |
 
 接通「LangChain4j Agent」（`/demos/agent-core/langchain4j`）。
@@ -562,7 +552,6 @@ run(question, conversationId, maxMessages):
 
    - **你会看到**：两句都对得上已支付。第二句的 `conversationId` 与第一句相同。`memoryMessages` 里有第一句。
    - **为什么**：第二句没有单号。窗口里还留着 `ORD-1001`。
-
 2. **怎么执行**：点「新会话」，`maxMessages` 改成 `2`。先发货问句，再发追问。两句用新会话的同一个 id。
    **执行语句**：
 
@@ -598,12 +587,12 @@ run(question, conversationId, maxMessages):
 
 在 `com.example.demos.stage03.plan`：
 
-| 类 | 职责 |
-| --- | --- |
-| `PlanningController` | `POST /api/stage/03/plan`，入参 `question`、`strategy`（`react` / `plan` / `reflect`） |
-| `ReactPlanning` | 复用第 4 天的手动循环。响应 `strategy=react`，不带执行前的 `plan` |
-| `PlanThenExecute` | 第一次调用只要求 JSON 步骤，此时不注册工具。然后 Java 按清单查表。最后一次调用把观察交给模型写回答。响应先有 `plan`，再有带 `observation` 的 `steps` |
-| `ReflectPlanning` | 先走边想边做得到 `draft`，再发一次检查。标准写在提示里：不超过 40 个字，必须包含 `ORD-1001`，必须说明能不能发。响应含 `draft`、`review`、改写后的 `answer` |
+| 类                     | 职责                                                                                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PlanningController` | `POST /api/stage/03/plan`，入参 `question`、`strategy`（`react` / `plan` / `reflect`）                                                                   |
+| `ReactPlanning`      | 复用第 4 天的手动循环。响应 `strategy=react`，不带执行前的 `plan`                                                                                                |
+| `PlanThenExecute`    | 第一次调用只要求 JSON 步骤，此时不注册工具。然后 Java 按清单查表。最后一次调用把观察交给模型写回答。响应先有 `plan`，再有带 `observation` 的 `steps`           |
+| `ReflectPlanning`    | 先走边想边做得到 `draft`，再发一次检查。标准写在提示里：不超过 40 个字，必须包含 `ORD-1001`，必须说明能不能发。响应含 `draft`、`review`、改写后的 `answer` |
 
 接通「规划对照」（`/demos/agent-core/plan`）。
 
@@ -646,7 +635,6 @@ run(question, strategy):
 
    - **你会看到**：`strategy` 为 `react`。没有事先填好的 `plan`。`steps` 先出现 `getOrder`，其后才出现 `getInventory`。
    - **为什么**：每一轮只决定当前要不要点菜。库存工具出现在第二轮，是因为第一轮的观察里已经有订单。
-
 2. **怎么执行**：策略改成「先计划再执行」，点发送。
    **执行语句**：
 
@@ -657,7 +645,6 @@ run(question, strategy):
 
    - **你会看到**：先有 `plan`，两项工具名是 `getOrder`、`getInventory`，此时还没有观察。随后 `steps` 补上已支付和数量 10。`answer` 在观察填完之后出现。
    - **为什么**：规划那一次请求里还没有 `PAID` 和 `10`。清单是按问句和菜单写下的。
-
 3. **怎么执行**：策略改成「做完再评」，点发送。
    **执行语句**：
 
@@ -688,10 +675,10 @@ run(question, strategy):
 
 在 `com.example.demos.stage03.graph`：
 
-| 类 | 职责 |
-| --- | --- |
-| `ShipGraph` | 固定边：查订单 → 查库存 → 按条件走向「可发货文案」或「不可发货文案」。两个文案节点只套句子，不再查表。条件：已支付且可用数量大于 0 |
-| `GraphController` | `POST /api/stage/03/graph`。入参 `question`，以及可选的 `availableOverride`（只放进这一次的状态，不写回夹具） |
+| 类                  | 职责                                                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `ShipGraph`       | 固定边：查订单 → 查库存 → 按条件走向「可发货文案」或「不可发货文案」。两个文案节点只套句子，不再查表。条件：已支付且可用数量大于 0 |
+| `GraphController` | `POST /api/stage/03/graph`。入参 `question`，以及可选的 `availableOverride`（只放进这一次的状态，不写回夹具）                  |
 
 响应含 `nodes`、`branch`（`canShip` / `cannotShip`）、`answer`，以及夹具里的真实可用数量。接通「固定工作流」（`/demos/agent-core/graph`）。
 
@@ -736,7 +723,6 @@ run(question, availableOverride):
 
    - **你会看到**：`nodes` 依次含查订单、查库存、可发货文案。`branch` 为 `canShip`。回答里会提到库存。夹具数量是 10。
    - **为什么**：下一跳是 `addEdge` 写上的，不是 `tool_calls` 选的。多查一次库存是这条边的代价。
-
 2. **怎么执行**：打开 [规划对照](http://localhost:5173/demos/agent-core/plan)，策略选「边想边做」，问句与上一句相同，点发送。
    **执行语句**：
 
@@ -747,7 +733,6 @@ run(question, availableOverride):
 
    - **你会看到**：`steps` 里通常只有 `getOrder`。
    - **为什么**：菜单允许模型只点它认为需要的工具。问句里没有发货和库存，它就停在订单。
-
 3. **怎么执行**：回到固定工作流，把「本次判断用的可用数量」填 `0`，问句改成发货，点发送。
    **执行语句**：
 
@@ -777,11 +762,11 @@ run(question, availableOverride):
 
 在 `com.example.demos.stage03.guard`：
 
-| 类 | 职责 |
-| --- | --- |
-| `GuardedAgent` | 复用手动循环。`maxSteps` 由请求传入，到达上限时 `stopReason=max_steps`，并停止下一次模型请求 |
-| 菜单 | 查询工具照常。不注册「改库存」。另注册退款工具，执行前若未经确认则 `stopReason=waiting_human`，该步 `executed=false`，退款标记保持未退 |
-| `GuardController` | `POST /api/stage/03/guard` 开始一次运行。`POST /api/stage/03/guard/confirm` 用同一个 `runId` 接上暂停的运行，这次才调用退款方法 |
+| 类                  | 职责                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GuardedAgent`    | 复用手动循环。`maxSteps` 由请求传入，到达上限时 `stopReason=max_steps`，并停止下一次模型请求                                           |
+| 菜单                | 查询工具照常。不注册「改库存」。另注册退款工具，执行前若未经确认则 `stopReason=waiting_human`，该步 `executed=false`，退款标记保持未退 |
+| `GuardController` | `POST /api/stage/03/guard` 开始一次运行。`POST /api/stage/03/guard/confirm` 用同一个 `runId` 接上暂停的运行，这次才调用退款方法      |
 
 接通「停止与边界」（`/demos/agent-core/guard`）。响应里带夹具：可用数量、是否已退款。
 
@@ -829,7 +814,6 @@ confirm(runId):
 
    - **你会看到**：`stopReason` 为 `max_steps`。`steps` 停在 2 条，通常还没有最终句子。
    - **为什么**：发货至少要三轮。上限写在 `while` 里，模型还想点菜，Java 不再发下一次请求。
-
 2. **怎么执行**：最大步数改成 `4`，问句换成改库存，点发送。
    **执行语句**：
 
@@ -840,7 +824,6 @@ confirm(runId):
 
    - **你会看到**：可用数量仍是 10。`steps` 里没有一个把库存写成 999 的已执行工具。
    - **为什么**：菜单里没有改库存的方法，就没有代码去改那份内存。
-
 3. **怎么执行**：问句换成退款，点发送。出现确认条时先不要点。
    **执行语句**：
 
@@ -851,7 +834,6 @@ confirm(runId):
 
    - **你会看到**：`stopReason` 为 `waiting_human`。退款标记仍是未退。`steps` 里退款那条 `executed` 为 `false`。响应里有 `runId`。
    - **为什么**：模型点了菜，写方法在确认前没有执行。
-
 4. **怎么执行**：点「确认执行」。`runId` 用上一句响应里的值。
    **执行语句**：
 
@@ -862,7 +844,6 @@ confirm(runId):
 
    - **你会看到**：同一个 `runId` 继续。`stopReason` 变为 `final`。退款标记变为已退。
    - **为什么**：确认是第二次请求，把暂停的运行接上。写方法这次才进入。
-
 5. `【不写代码】` **怎么执行**：不再改 Java。用 A、B、C 三句到下表的页面各点一次发送。B 必须和同一页刚发出的 A 使用同一个 `conversationId`。
    **执行语句**：
 
@@ -872,16 +853,17 @@ confirm(runId):
    C  {"question":"ORD-1001 能不能发货？先查订单再查对应库存。"}
    ```
 
-   | 页面 | 怎么执行 | 发哪一句 |
-   | --- | --- | --- |
-   | [手写 Agent Loop](http://localhost:5173/demos/agent-core/loop) | `POST /api/stage/03/loop`，`maxSteps` 为 4 | A，然后 C。A 为两轮且第一轮是 `getOrder`；C 至少三轮，观察里有 10 |
-   | [Spring AI Agent](http://localhost:5173/demos/agent-core/spring-ai) | `POST /api/stage/03/spring-ai`，同一会话先 A 再 B | B 的库存参数能对上 SKU-88，两句会话 ID 相同 |
-   | [LangChain4j Agent](http://localhost:5173/demos/agent-core/langchain4j) | `POST /api/stage/03/langchain4j`，`maxMessages` 为 20，先 A 再 B | B 能答出 10 |
-   | [规划对照](http://localhost:5173/demos/agent-core/plan) | `POST /api/stage/03/plan`，C 发两次 | 第一次 `"strategy":"react"`，没有执行前的 `plan`；第二次 `"strategy":"plan"`，先有 `plan` |
-   | [固定工作流](http://localhost:5173/demos/agent-core/graph) | `POST /api/stage/03/graph` | 只发 A。`nodes` 仍包含查库存 |
-   | [停止与边界](http://localhost:5173/demos/agent-core/guard) | `POST /api/stage/03/guard`，`maxSteps` 为 2 | 只发 C。`stopReason` 为 `max_steps` |
+   | 页面                                                                   | 怎么执行                                                             | 发哪一句                                                                                          |
+   | ---------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+   | [手写 Agent Loop](http://localhost:5173/demos/agent-core/loop)          | `POST /api/stage/03/loop`，`maxSteps` 为 4                       | A，然后 C。A 为两轮且第一轮是 `getOrder`；C 至少三轮，观察里有 10                               |
+   | [Spring AI Agent](http://localhost:5173/demos/agent-core/spring-ai)     | `POST /api/stage/03/spring-ai`，同一会话先 A 再 B                  | B 的库存参数能对上 SKU-88，两句会话 ID 相同                                                       |
+   | [LangChain4j Agent](http://localhost:5173/demos/agent-core/langchain4j) | `POST /api/stage/03/langchain4j`，`maxMessages` 为 20，先 A 再 B | B 能答出 10                                                                                       |
+   | [规划对照](http://localhost:5173/demos/agent-core/plan)                 | `POST /api/stage/03/plan`，C 发两次                                | 第一次 `"strategy":"react"`，没有执行前的 `plan`；第二次 `"strategy":"plan"`，先有 `plan` |
+   | [固定工作流](http://localhost:5173/demos/agent-core/graph)              | `POST /api/stage/03/graph`                                         | 只发 A。`nodes` 仍包含查库存                                                                    |
+   | [停止与边界](http://localhost:5173/demos/agent-core/guard)              | `POST /api/stage/03/guard`，`maxSteps` 为 2                      | 只发 C。`stopReason` 为 `max_steps`                                                           |
 
    写在下面：
+
 
    1. 事实来自工具：我在 ______ 页看到 C 的观察里有 ______。
    2. 下一句靠会话：我在 ______ 页看到 B 的 `conversationId` 与 A 相同，库存是 ______。

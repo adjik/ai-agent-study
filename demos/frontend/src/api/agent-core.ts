@@ -16,8 +16,34 @@ export interface StepRecord {
   toolName: string | null
   /** 模型参数原文，例如 {"orderId":"ORD-1001"} */
   arguments: string | null
-  /** Java 查表 JSON。事实在这里，不在 answer 的措辞里 */
+  /**
+   * Java 查表 JSON。PAID 是命中；error=not_found 是格式合法但没有这行；
+   * error=invalid_argument 是进表之前被挡住。
+   */
   observation: string | null
+  /** 这次查表的毫秒数。收口轮没有查表，为 null */
+  latencyMs: number | null
+}
+
+export interface FixtureOrder {
+  orderId: string
+  userId: string
+  sku: string
+  qty: number
+  status: string
+  warehouse: string
+}
+
+export interface FixtureInventory {
+  sku: string
+  warehouse: string
+  available: number
+}
+
+/** 这一次响应时的内存夹具，用来对照观察，不是模型写的。 */
+export interface FixtureSummary {
+  orders: FixtureOrder[]
+  inventory: FixtureInventory[]
 }
 
 /**
@@ -28,6 +54,7 @@ export interface LoopResponse {
   answer: string
   stopReason: string
   steps: StepRecord[]
+  fixture: FixtureSummary
 }
 
 export const agentCoreApi = {

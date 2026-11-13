@@ -387,15 +387,15 @@ export const DEMO_SERVICES: DemoService[] = [
         id: 'loop',
         title: '手写 Agent Loop',
         description:
-          'POST /api/stage/03/loop。JDK HttpClient 自己跑 while：有 tool_calls 就查表并把观察发回去，不再点菜或到达 maxSteps 就停。响应含 answer、stopReason、steps。',
+          'POST /api/stage/03/loop。JDK HttpClient 自己跑 while。steps 里能分开 PAID、not_found 和 invalid_argument，并带 latencyMs 与当前夹具。',
         route: '/demos/agent-core/loop',
         method: 'POST',
         apiPath: '/stage/03/loop',
         view: 'agentLoop',
         learning: {
           plan: ['阶段 3 · Agent Loop'],
-          stageDoc: '第 2 天 · 一问一轮、一问多轮',
-          notes: ['finish_reason=tool_calls', 'role=tool 把观察发回', 'ReAct 先动作再看观察'],
+          stageDoc: '第 2 天 · 一问一轮、一问多轮；第 3 天 · not_found 与 invalid_argument',
+          notes: ['finish_reason=tool_calls', 'role=tool 把观察发回', 'not_found 查了表', 'invalid_argument 不进表'],
         },
       },
       planned('agent-core', 'spring-ai', 'Spring AI Agent', '/stage/03/spring-ai'),

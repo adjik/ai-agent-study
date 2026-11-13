@@ -11,5 +11,6 @@ import java.util.List;
  * @param stopReason 循环为什么停。{@code final}：模型不再点菜。{@code max_steps}：for 跑满后响应里仍有 tool_calls。
  *                   不要和单轮的 finishReason（stop / tool_calls）混用
  * @param steps      按时间排列。问状态时期望 2 条，问发货时期望至少 3 条，最后一条没有工具名
+ * @param fixture    当前内存夹具的快照。观察里的 PAID / 10 应对得上这里；第 10 天改库存后用它确认夹具本身变没变
  */
-public record LoopResponse(String answer, String stopReason, List<StepRecord> steps) {}
+public record LoopResponse(String answer, String stopReason, List<StepRecord> steps, FixtureSummary fixture) {}
