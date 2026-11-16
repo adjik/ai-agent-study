@@ -61,4 +61,10 @@ export const agentCoreApi = {
   /** Vite 把 /api 代理到 8080，这里写的是代理后面的路径。 */
   loop: (question: string, maxSteps: number) =>
     http.post<LoopResponse>('/stage/03/loop', { question, maxSteps }).then((response) => response.data),
+
+  /** 同一份 LoopResponse。差别是服务端用 ChatModel，而不是 JDK HttpClient。 */
+  springAi: (question: string, maxSteps: number) =>
+    http
+      .post<LoopResponse>('/stage/03/spring-ai', { question, maxSteps })
+      .then((response) => response.data),
 }

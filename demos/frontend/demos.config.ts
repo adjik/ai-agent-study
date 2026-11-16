@@ -26,6 +26,7 @@ export type DemoView =
   | 'toolTools'
   | 'toolChat'
   | 'agentLoop'
+  | 'agentSpring'
   | 'placeholder'
 
 export interface DemoEndpoint {
@@ -398,7 +399,21 @@ export const DEMO_SERVICES: DemoService[] = [
           notes: ['finish_reason=tool_calls', 'role=tool 把观察发回', 'not_found 查了表', 'invalid_argument 不进表'],
         },
       },
-      planned('agent-core', 'spring-ai', 'Spring AI Agent', '/stage/03/spring-ai'),
+      {
+        id: 'spring-ai',
+        title: 'Spring AI Agent',
+        description:
+          'POST /api/stage/03/spring-ai。关掉 ChatClient 的自动工具顾问，用 ChatModel 发请求，ToolCallingManager 执行阶段 2 的查表。steps 形状与手写循环相同。',
+        route: '/demos/agent-core/spring-ai',
+        method: 'POST',
+        apiPath: '/stage/03/spring-ai',
+        view: 'agentSpring',
+        learning: {
+          plan: ['阶段 3 · Agent Loop'],
+          stageDoc: '第 4 天 · Spring AI 的循环交还给你',
+          notes: ['ChatModel 不跑 while', 'ToolCallingManager 只执行点菜', '与手写循环对照 getOrder / getInventory'],
+        },
+      },
       planned('agent-core', 'langchain4j', 'LangChain4j Agent', '/stage/03/langchain4j'),
       planned('agent-core', 'plan', '规划对照', '/stage/03/plan'),
       planned('agent-core', 'graph', '固定工作流', '/stage/03/graph'),
