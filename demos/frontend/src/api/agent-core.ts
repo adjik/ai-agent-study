@@ -57,14 +57,40 @@ export interface LoopResponse {
   fixture: FixtureSummary
 }
 
+/** 记忆仓库里的一条。role=tool 时 text 里含工具名和观察。 */
+export interface MemoryMessage {
+  role: string
+  text: string
+}
+
+/**
+ * Spring AI 循环的响应。memoryRepository 是仓库类名，本阶段是堆里的实现。
+ * trigger 只在巡检里出现，值为 schedule。
+ */
+export interface SpringAgentResponse extends LoopResponse {
+  conversationId: string
+  memoryMessages: MemoryMessage[]
+  memoryRepository: string
+  trigger: string | null
+}
+
+export interface SpringAgentBody {
+  question: string
+  maxSteps: number
+  maxMessages: number
+  rememberToolTrace: boolean
+  conversationId: string
+}
+
 export const agentCoreApi = {
   /** Vite 把 /api 代理到 8080，这里写的是代理后面的路径。 */
   loop: (question: string, maxSteps: number) =>
     http.post<LoopResponse>('/stage/03/loop', { question, maxSteps }).then((response) => response.data),
 
-  /** 同一份 LoopResponse。差别是服务端用 ChatModel，而不是 JDK HttpClient。 */
-  springAi: (question: string, maxSteps: number) =>
-    http
-      .post<LoopResponse>('/stage/03/spring-ai', { question, maxSteps })
-      .then((response) => response.data),
+  springAi: (body: SpringAgentBody) =>
+    http.post<SpringAgentResponse>('/stage/03/spring-ai', body).then((response) => response.data),
+
+  /** 不传问句。服务端用写死的发货句和 conversationId=patrol。 */
+  patrol: () =>
+    http.post<SpringAgentResponse>('/stage/03/spring-ai/patrol').then((response) => response.data),
 }

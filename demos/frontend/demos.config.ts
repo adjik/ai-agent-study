@@ -403,15 +403,15 @@ export const DEMO_SERVICES: DemoService[] = [
         id: 'spring-ai',
         title: 'Spring AI Agent',
         description:
-          'POST /api/stage/03/spring-ai。关掉 ChatClient 的自动工具顾问，用 ChatModel 发请求，ToolCallingManager 执行阶段 2 的查表。steps 形状与手写循环相同。',
+          'POST /api/stage/03/spring-ai 带会话记忆。仓库是进程内的 InMemoryChatMemoryRepository。POST /spring-ai/patrol 不读输入框，trigger=schedule。',
         route: '/demos/agent-core/spring-ai',
         method: 'POST',
         apiPath: '/stage/03/spring-ai',
         view: 'agentSpring',
         learning: {
           plan: ['阶段 3 · Agent Loop'],
-          stageDoc: '第 4 天 · Spring AI 的循环交还给你',
-          notes: ['ChatModel 不跑 while', 'ToolCallingManager 只执行点菜', '与手写循环对照 getOrder / getInventory'],
+          stageDoc: '第 4–6 天 · 手动循环、窗口记忆、内存仓库与巡检',
+          notes: ['ChatMemory 决定留哪些', 'ChatMemoryRepository 决定存在哪', '巡检调用同一个 Service'],
         },
       },
       planned('agent-core', 'langchain4j', 'LangChain4j Agent', '/stage/03/langchain4j'),

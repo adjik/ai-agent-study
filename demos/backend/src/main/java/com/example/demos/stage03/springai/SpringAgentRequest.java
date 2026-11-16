@@ -1,9 +1,17 @@
 package com.example.demos.stage03.springai;
 
 /**
- * 第 4 天只要问句和步数上限。会话 ID、窗口条数留到第 5 天再加。
+ * 聊天入口的请求。巡检接口不读这个对象。
  *
- * @param question 用户原句。这次接口不读上一问
- * @param maxSteps 请求模型的次数上限。null 时 Controller 用 4
+ * @param question          用户这一句。模型看不到上一句，除非 conversationId 下的记忆还在
+ * @param maxSteps          循环上限，null 时用 4
+ * @param maxMessages       窗口最多保留几条，null 时用 20。系统消息不占这个名额的算法在窗口实现里
+ * @param rememberToolTrace true 时把每一轮的点菜和工具结果写入记忆；false 时只留用户句和最终回答
+ * @param conversationId    记忆 key。空则服务端生成。点「新会话」才换；重启后旧 key 在堆里已经没了
  */
-public record SpringAgentRequest(String question, Integer maxSteps) {}
+public record SpringAgentRequest(
+        String question,
+        Integer maxSteps,
+        Integer maxMessages,
+        Boolean rememberToolTrace,
+        String conversationId) {}
