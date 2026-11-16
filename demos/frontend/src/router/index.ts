@@ -18,6 +18,7 @@ import ToolToolsView from '@/views/tool-use/ToolToolsView.vue'
 import ToolChatView from '@/views/tool-use/ToolChatView.vue'
 import LoopView from '@/views/agent-core/LoopView.vue'
 import SpringAgentView from '@/views/agent-core/SpringAgentView.vue'
+import Lc4jAgentView from '@/views/agent-core/Lc4jAgentView.vue'
 import type { Component } from 'vue'
 
 const viewMap: Record<DemoView, Component> = {
@@ -36,6 +37,7 @@ const viewMap: Record<DemoView, Component> = {
   toolChat: ToolChatView,
   agentLoop: LoopView,
   agentSpring: SpringAgentView,
+  agentLangchain4j: Lc4jAgentView,
   placeholder: PlaceholderView,
 }
 

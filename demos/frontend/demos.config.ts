@@ -27,6 +27,7 @@ export type DemoView =
   | 'toolChat'
   | 'agentLoop'
   | 'agentSpring'
+  | 'agentLangchain4j'
   | 'placeholder'
 
 export interface DemoEndpoint {
@@ -414,7 +415,21 @@ export const DEMO_SERVICES: DemoService[] = [
           notes: ['ChatMemory 决定留哪些', 'ChatMemoryRepository 决定存在哪', '巡检调用同一个 Service'],
         },
       },
-      planned('agent-core', 'langchain4j', 'LangChain4j Agent', '/stage/03/langchain4j'),
+      {
+        id: 'langchain4j',
+        title: 'LangChain4j Agent',
+        description:
+          'POST /api/stage/03/langchain4j。AiServices 内部跑工具循环，记忆用 MessageWindowChatMemory。窗口改成 2 时，工具来回会被一起裁掉。',
+        route: '/demos/agent-core/langchain4j',
+        method: 'POST',
+        apiPath: '/stage/03/langchain4j',
+        view: 'agentLangchain4j',
+        learning: {
+          plan: ['阶段 3 · Agent Loop'],
+          stageDoc: '第 7 天 · 同一句问题换框架，窗口裁消息',
+          notes: ['AiServices 背后仍是工具循环', 'MessageWindowChatMemory 按条数留最近的消息', '带工具调用的消息被裁时结果一并裁'],
+        },
+      },
       planned('agent-core', 'plan', '规划对照', '/stage/03/plan'),
       planned('agent-core', 'graph', '固定工作流', '/stage/03/graph'),
       planned('agent-core', 'guard', '停止与边界', '/stage/03/guard'),

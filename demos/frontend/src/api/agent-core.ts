@@ -82,6 +82,21 @@ export interface SpringAgentBody {
   conversationId: string
 }
 
+/**
+ * LangChain4j 循环的响应。工具轨迹留在框架内部，页面只能看到回答和记忆窗口。
+ */
+export interface Lc4jAgentResponse {
+  answer: string
+  conversationId: string
+  memoryMessages: MemoryMessage[]
+}
+
+export interface Lc4jAgentBody {
+  question: string
+  conversationId: string
+  maxMessages: number
+}
+
 export const agentCoreApi = {
   /** Vite 把 /api 代理到 8080，这里写的是代理后面的路径。 */
   loop: (question: string, maxSteps: number) =>
@@ -93,4 +108,8 @@ export const agentCoreApi = {
   /** 不传问句。服务端用写死的发货句和 conversationId=patrol。 */
   patrol: () =>
     http.post<SpringAgentResponse>('/stage/03/spring-ai/patrol').then((response) => response.data),
+
+  /** 同一份 Store、同一句问题，工具循环由 AiServices 跑。 */
+  langchain4j: (body: Lc4jAgentBody) =>
+    http.post<Lc4jAgentResponse>('/stage/03/langchain4j', body).then((response) => response.data),
 }
