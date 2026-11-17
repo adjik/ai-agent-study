@@ -1,25 +1,18 @@
 package com.example.demos.stage03.loop;
 
 import com.example.demos.common.config.DeepSeekConfig;
-import com.example.demos.stage02.store.InventoryStore;
-import com.example.demos.stage02.store.OrderStore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.example.demos.stage02.api.InventoryRecord;
-import com.example.demos.stage02.api.OrderRecord;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -30,7 +23,8 @@ import org.springframework.util.StringUtils;
  * {@code /chat/completions}，这个类里不出现 {@code ChatClient}。阶段 2 的 {@code ToolCallingAdvisor}
  * 把同一段循环藏在 {@code call()} 里面，页面只能看到最终句子；这里把每一轮留在 {@link StepRecord} 里。
  * <p>
- * 模型权重里没有 ORD-1001。表在本进程的 {@link OrderStore} / {@link InventoryStore}。
+ * 模型权重里没有 ORD-1001。表在本进程的 {@code OrderStore} / {@code InventoryStore}，经
+ * {@link FixtureToolDispatcher} 查询。
  * 所以第一轮模型只能「点菜」（返回 {@code tool_calls}），Java 查完表，把 JSON 以 {@code role=tool}
  * 追加进 {@code messages}，再把整包历史 POST 回去。下一轮模型才第一次看见 {@code PAID}。
  * <p>
@@ -53,9 +47,6 @@ public class HandWrittenAgentLoop {
 
     private static final Logger log = LoggerFactory.getLogger(HandWrittenAgentLoop.class);
 
-    /** 合法单号。不匹配的值是格式错误，不能拿去对 OrderStore，否则 ABC 和「没有这张单」会混成同一种 not_found。 */
-    private static final Pattern ORDER_ID = Pattern.compile("ORD-\\d+");
-
     /**
      * 每次请求都会带上的系统消息。它不代替工具菜单：菜单告诉模型「有哪两个函数、参数长什么样」，
      * 这段文字告诉模型「什么时候该停、什么时候必须再点一把」。
@@ -74,10 +65,6 @@ public class HandWrittenAgentLoop {
             观察里的 error 是 invalid_argument 时，说明格式不对；是 not_found 时，说明格式合法但没有这张单。两种都禁止说成已支付或 PAID。
             """;
 
-    /** 阶段 2 的订单夹具。ORD-1001 的 status 是 PAID，同时带出 sku=SKU-88、warehouse=WH-A。 */
-    private final OrderStore orderStore;
-    /** 阶段 2 的库存夹具。SKU-88 在 WH-A 的 available 是 10。 */
-    private final InventoryStore inventoryStore;
     /**
      * 手写 HTTP 用的 Jackson 2。Spring Boot 4 自动配置的是 tools.jackson（Jackson 3），
      * 容器里没有 {@code com.fasterxml.jackson.databind.ObjectMapper} 这个 Bean，所以自己 new，
@@ -94,19 +81,17 @@ public class HandWrittenAgentLoop {
     private final String model;
     /** 每次请求都带同一份 tools。模型只能点这里登记过的名字。 */
     private final ArrayNode toolMenu;
+    /** 查表这一段与规划那一页共用，两边的 not_found / invalid_argument 才是同一套规则。 */
+    private final FixtureToolDispatcher dispatcher;
 
-    public HandWrittenAgentLoop(
-            OrderStore orderStore,
-            InventoryStore inventoryStore,
-            DeepSeekConfig deepSeekConfig) {
-        this.orderStore = orderStore;
-        this.inventoryStore = inventoryStore;
+    public HandWrittenAgentLoop(DeepSeekConfig deepSeekConfig, FixtureToolDispatcher dispatcher) {
         this.objectMapper = new ObjectMapper();
         this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
         this.apiKey = deepSeekConfig.getApiKey();
         this.endpoint = chatCompletionsUrl(deepSeekConfig.getBaseUrl());
         this.model = deepSeekConfig.getModel();
         this.toolMenu = toolMenu();
+        this.dispatcher = dispatcher;
     }
 
     /**
@@ -159,8 +144,7 @@ public class HandWrittenAgentLoop {
             String finishReason = choice.path("finish_reason").asText("");
             JsonNode toolCalls = message.path("tool_calls");
             if (!toolCalls.isArray() || toolCalls.isEmpty()) {
-                String answer = textOrEmpty(message.get("content"));
-                /*
+                String answer = textOrEmpty(message.get("content"));                /*
                  * 收口也占一条轨迹，工具三个字段留 null。页面把空工具名显示成「不再点菜」。
                  * 只问状态时，这条是第 2 步，finishReason 通常是 stop，stopReason 用 final 而不是 stop：
                  * final 是循环自己的结束原因，stop 是厂商这一轮的结束原因，两个字段不要混用。
@@ -168,7 +152,7 @@ public class HandWrittenAgentLoop {
                 // 收口轮没有 dispatch，latencyMs 留空。耗时只衡量查表，不把模型等待算进去。
                 steps.add(new StepRecord(round, finishReason.isBlank() ? "stop" : finishReason, null, null, null, null));
                 log.info("[loop] round={} finishReason={} tools=0 stop=final", round, finishReason);
-                return new LoopResponse(answer, "final", List.copyOf(steps), fixture());
+                return new LoopResponse(answer, "final", List.copyOf(steps), dispatcher.fixture());
             }
 
             /*
@@ -189,12 +173,12 @@ public class HandWrittenAgentLoop {
                  * 也放进 role=tool 给下一轮模型。模型从这段 JSON 里读 sku、warehouse，
                  * 才会在下一轮点 getInventory，而不是在第一轮就猜仓库。
                  */
-                ToolResult result = dispatch(toolName, arguments);
+                FixtureToolDispatcher.Observation observation = dispatcher.dispatch(toolName, arguments);
                 steps.add(new StepRecord(
-                        round, "tool_calls", toolName, arguments, result.observation(), result.latencyMs()));
-                messages.add(toolMessage(call.path("id").asText(""), result.observation()));
+                        round, "tool_calls", toolName, arguments, observation.json(), observation.latencyMs()));
+                messages.add(toolMessage(call.path("id").asText(""), observation.json()));
                 log.info("[loop] round={} finishReason=tool_calls tool={} args={} latencyMs={}",
-                        round, toolName, arguments, result.latencyMs());
+                        round, toolName, arguments, observation.latencyMs());
             }
             // 本轮工具已经执行完，for 回到下一轮，用变长之后的 messages 再 POST 一次。
         }
@@ -203,98 +187,7 @@ public class HandWrittenAgentLoop {
          * 发货至少三轮（查订单、查库存、写句子）。maxSteps=2 时通常停在这里，回答还不是业务句子。
          * 已经执行过的查询仍在 steps 里，页面能看到查到哪一步。
          */
-        return new LoopResponse("已达步数上限", "max_steps", List.copyOf(steps), fixture());
-    }
-
-    /**
-     * 一次工具执行的结果。observation 进轨迹，也作为 role=tool 的 content 发回模型。
-     * latencyMs 从进入本方法到观察生成完毕，不含前面的模型 HTTP。
-     */
-    private record ToolResult(String observation, long latencyMs) {}
-
-    /**
-     * 按模型点的名字查表。循环骨架不在这里：这里只决定观察 JSON 和这一步耗时。
-     * <p>
-     * 三种观察要能在页面上分开：
-     * <ul>
-     *   <li>命中：订单或库存记录本身，例如 status=PAID、available=10。</li>
-     *   <li>{@code not_found}：参数格式合法，表里没有。ORD-9999 会真正调用 {@link OrderStore#findById}。</li>
-     *   <li>{@code invalid_argument}：格式在进表之前被挡住。ABC 不会出现在 findById 的参数里。</li>
-     * </ul>
-     * 查表抛出的异常只打日志。观察里不放 message、不放堆栈，避免把内部异常原文交回模型和浏览器。
-     */
-    private ToolResult dispatch(String name, String arguments) {
-        long started = System.nanoTime();
-        String observation;
-        try {
-            JsonNode args = parseArguments(arguments);
-            observation = switch (name) {
-                case "getOrder" -> orderObservation(textOrEmpty(args.get("orderId")));
-                case "getInventory" -> inventoryObservation(
-                        textOrEmpty(args.get("sku")), textOrEmpty(args.get("warehouse")));
-                default -> toJson(Map.of("error", "unknown_tool", "name", name));
-            };
-        } catch (RuntimeException ex) {
-            log.error("[loop] dispatch failed name={} args={}", name, arguments, ex);
-            observation = toJson(Map.of("error", "tool_failed", "name", name));
-        }
-        long latencyMs = (System.nanoTime() - started) / 1_000_000L;
-        return new ToolResult(observation, latencyMs);
-    }
-
-    /**
-     * 整行订单序列化，不能只返回 "PAID"。发货的下一轮需要这条 JSON 里的 sku 和 warehouse。
-     * 格式校验在 findById 之前：空串、ABC、ord-1001 都是 invalid_argument，不进 Store。
-     * 只有整串匹配 {@code ORD-} 加数字才查表；表里没有则是 not_found，例如 ORD-9999。
-     */
-    private String orderObservation(String orderId) {
-        if (!ORDER_ID.matcher(orderId).matches()) {
-            log.info("[loop] getOrder orderId={} result=invalid_argument", orderId);
-            return toJson(Map.of("error", "invalid_argument", "orderId", orderId));
-        }
-        return orderStore.findById(orderId)
-                .map(order -> {
-                    log.info("[loop] getOrder orderId={} result={}", orderId, order.status());
-                    return toJson(order);
-                })
-                .orElseGet(() -> {
-                    log.info("[loop] getOrder orderId={} result=not_found", orderId);
-                    return toJson(Map.of("error", "not_found", "orderId", orderId));
-                });
-    }
-
-    /**
-     * 库存先看 sku、warehouse 是否有字，空的是 invalid_argument，不去拼 Map 的 key。
-     * 两个都有字才 find。找不到是 not_found，和订单的「格式对但没有这行」同一含义。
-     */
-    private String inventoryObservation(String sku, String warehouse) {
-        if (!StringUtils.hasText(sku) || !StringUtils.hasText(warehouse)) {
-            log.info("[loop] getInventory sku={} warehouse={} result=invalid_argument", sku, warehouse);
-            return toJson(Map.of(
-                    "error", "invalid_argument",
-                    "sku", sku,
-                    "warehouse", warehouse));
-        }
-        return inventoryStore.find(sku, warehouse)
-                .map(row -> {
-                    log.info("[loop] getInventory sku={} warehouse={} result={}", sku, warehouse, row.available());
-                    return toJson(row);
-                })
-                .orElseGet(() -> {
-                    log.info("[loop] getInventory sku={} warehouse={} result=not_found", sku, warehouse);
-                    return toJson(Map.of("error", "not_found", "sku", sku, "warehouse", warehouse));
-                });
-    }
-
-    /** 响应附带的夹具。排序只为了页面稳定，不改变 Store 里的数据。 */
-    private FixtureSummary fixture() {
-        List<OrderRecord> orders = orderStore.snapshot().values().stream()
-                .sorted(Comparator.comparing(OrderRecord::orderId))
-                .toList();
-        List<InventoryRecord> inventory = inventoryStore.snapshot().values().stream()
-                .sorted(Comparator.comparing(InventoryRecord::sku).thenComparing(InventoryRecord::warehouse))
-                .toList();
-        return new FixtureSummary(orders, inventory);
+        return new LoopResponse("已达步数上限", "max_steps", List.copyOf(steps), dispatcher.fixture());
     }
 
     /**
@@ -462,33 +355,8 @@ public class HandWrittenAgentLoop {
         return arguments.toString();
     }
 
-    /**
-     * 把参数字符串解析成对象再取 orderId / sku / warehouse。
-     * 解析失败时返回空对象，随后的查表走 not_found，不把 Jackson 异常抛出循环——
-     * 坏参数是一次观察，循环还可以把这段错误发回模型。
-     */
-    private JsonNode parseArguments(String arguments) {
-        try {
-            JsonNode node = objectMapper.readTree(arguments);
-            return node.isObject() ? node : objectMapper.createObjectNode();
-        } catch (JsonProcessingException ex) {
-            return objectMapper.createObjectNode();
-        }
-    }
-
-    private String toJson(Object value) {
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException ex) {
-            return "{\"error\":\"serialize_failed\"}";
-        }
-    }
-
     private static String textOrEmpty(JsonNode node) {
-        if (node == null || node.isNull()) {
-            return "";
-        }
-        return node.asText("");
+        return node == null || node.isNull() ? "" : node.asText("");
     }
 
     /**

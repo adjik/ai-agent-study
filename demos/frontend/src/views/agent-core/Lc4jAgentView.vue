@@ -40,6 +40,10 @@ const { loading, error, data, elapsedMs, run } = useRunner(() =>
 
 const memoryMessages = computed<MemoryMessage[]>(() => data.value?.memoryMessages ?? [])
 
+/**
+ * 换会话 ID 而不是清空服务端记忆：旧 id 下的消息仍留在进程里，
+ * 只是页面不再拿它去查。清掉上一次结果，避免把旧会话的窗口误认为新会话的。
+ */
 function newSession() {
   conversationId.value = crypto.randomUUID()
   data.value = null
@@ -51,6 +55,10 @@ function applyPreset(preset: (typeof PRESETS)[number]) {
   question.value = preset.text
 }
 
+/*
+ * 发送前不改会话 ID。同一会话的第二句必须沿用上一次响应里的那个值，
+ * 否则「刚才那张单」就没有单号可指。
+ */
 function submit() {
   if (!question.value.trim()) {
     return

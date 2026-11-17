@@ -14,8 +14,8 @@
 - [X] 第 4 天 `【写代码】` Spring AI 的循环交还给你
 - [X] 第 5 天 `【写代码】` 会话能接上，窗口会忘掉
 - [X] 第 6 天 `【写代码】` 记忆跟着进程走，巡检不必打字
-- [ ] 第 7 天 `【写代码】` LangChain4j 走同一句
-- [ ] 第 8 天 `【写代码】` 三种规划各看一次字段
+- [X] 第 7 天 `【写代码】` LangChain4j 走同一句
+- [X] 第 8 天 `【写代码】` 三种规划各看一次字段
 - [ ] 第 9 天 `【写代码】` 下一步写在边上
 - [ ] 第 10 天 `【写代码】` 三种停法；收口三句话 `【不写代码】`
 
@@ -574,14 +574,75 @@ run(question, conversationId, maxMessages):
 
 **动手**：`【写代码】`
 
-**学什么**：边想边做时，下一步在看到上一次观察之后才决定，响应里没有事先写好的计划。先计划再执行时，步骤清单出现在查表之前。做完再评时，多一次模型调用只改句子，不再查表。
+**学什么**：同样一句「ORD-1001 能不能发货」，只换 `strategy`，就换了一种「下一步由谁决定」。边想边做是模型每轮看到观察之后再决定下一步；先计划再执行是一次性把清单写完、Java 照着清单做；做完再评是先把答案写出来，再用第二次调用按写死的标准改句子。三种查的都是同一份夹具，所以页面上的差别只在于多出来哪个字段、`steps` 什么时候变长。
 
-**为了什么**：三种做法查的是同一份夹具。页面上多出来的 `plan`、`draft`、`review` 用来区分「下一步是谁定的」。
+**为了什么**：前七天只有一种循环形状。生产里选错形状，代价不在代码难写，而在步数和延迟不可控，或者计划一步错就整条跑偏。今天要能指着页面上的 `plan`、`draft`、`review` 说清「这一步是谁定的、什么时候定的」，并知道遇到什么任务该选哪一种。
 
 **今天读**
 
-- 回到 [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) 里的工作流模式。读完应能对上：提示链接近「先计划再执行」；评估器—优化器接近「做完再评」；由模型在循环里自己选工具的那一节，就是边想边做。
-- 第 2 天读过的 [ReAct](https://www.promptingguide.ai/techniques/react) 今天不用重读全文，对照页面上按时间变长的 `steps` 即可。
+- 回到 [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) 里的工作流模式。只读三处，各读一遍就够：
+  - **Prompt chaining（提示链）**：固定顺序，前一步输出是后一步输入。对应「先计划再执行」——清单就是链条的第一环。
+  - **Evaluator-optimizer（评估器—优化器）**：一个模型生成、另一个按标准评估并打回，循环到通过为止。对应「做完再评」。
+  - **Agent（自主循环）**：模型自己在循环里选工具，没有事先写好的路径。对应「边想边做」。
+  - 读完应能说出：文章为什么建议「能用一次调用解决就别上 Agent」——每多一个环节就多一次调用、多一段延迟、多一个失败点。
+- 第 2 天读过的 [ReAct](https://www.promptingguide.ai/techniques/react) 今天不用重读全文，对照页面上按时间变长的 `steps` 即可。重点看它那句「Thought → Action → Observation 交替」，今天的 react 策略就是这三段在 JSON 里的落点。
+
+**三种规划到底在比什么**
+
+一句话：**规划 = 决定下一步做什么，以及什么时候决定。** 三种策略只在这两件事上不同。
+
+| 策略 | 谁决定下一步 | 什么时候决定 | 模型调用次数 | 观察什么时候可见 | 典型失败 |
+| --- | --- | --- | --- | --- | --- |
+| ReAct（边想边做） | 模型，每一轮 | 看到上一次观察之后 | 至少 2 次，随问句增长 | 下一轮才可见 | 步数不可预测，可能绕圈 |
+| Plan-and-Execute（先计划再执行） | 模型一次写完清单，Java 照着执行 | 任何观察之前 | 2 次（写清单 + 写句子） | 执行阶段才可见 | 清单写错，后面全错 |
+| Reflection（做完再评） | 第一次是模型，第二次是写死的标准 | 草稿出来之后 | 草稿的次数 + 1 | 草稿阶段已可见 | 审稿顺着草稿的错走 |
+
+这三种不是三个框架，而是三段控制流的不同写法。Spring AI 的顾问、LangChain4j 的 `AiServices`、LangGraph 的图，包装的也是这几种形状，只是把 `while` 藏进了方法内部。
+
+**原理：边想边做（ReAct）**
+
+- 每一轮模型只做一件事：要么点一个工具，要么写最终句子。它看不到未来，只能基于消息列表里已有的事实决定。
+- 为什么发货这个问句天然是两跳：库存工具要 `sku` 和 `warehouse`，这两个值只有查过订单才知道。所以第一轮不可能同时点两把工具，第二把的参数必须来自第一把的观察。这是 ReAct 的存在理由——下一步依赖上一步的结果。
+- 等价于 Java 里的一个 `while`：每次请求都把全量消息带给模型，模型返回工具调用就执行、把结果追加进消息，再请求。token 随轮次线性增长，第 3 轮的提示里带着前两轮的点菜和观察。上下文过长怎么办是记忆和阶段 4 的事，今天先接受这个成本。
+- 页面证据：`steps` 是按时间一条条长出来的，第一行只有 `getOrder`，第二行才出现 `getInventory`；响应里根本没有 `plan` 字段。
+
+**原理：先计划再执行（Plan-and-Execute）**
+
+- 拆成三段：planner（不挂工具，只输出 JSON 清单）→ executor（Java 按清单查表，全程不经过模型）→ synthesizer（不挂工具，把观察写成一句话）。
+- 关键约束在 planner：那一刻 `PAID` 和 `10` 都还不存在，清单只能根据问句和菜单猜。所以模型会把 `sku`、`warehouse` 写成 `null`，执行时由 `fillArguments` 从上一步的订单观察里补。补不出来就带着 `null` 去查，得到 `invalid_argument`——这就是「清单写得太早」的代价，也是它和边想边做最本质的区别。
+- 为什么 `steps` 里的 `finishReason` 写 `plan` 而不是 `tool_calls`：这一轮模型没有点菜，是 Java 照着清单在查。协议字段要如实反映谁发起了这次执行，否则线上会把「按计划执行」误读成「模型又点了一次菜」。同理，这里的 `round` 是清单里的序号，不是模型请求次数。
+- 为什么执行完还要再调一次模型：观察是 JSON，用户要的是一句话。这一次同样不挂工具，避免它看到观察后又想再查一遍。
+- 生产用途：步骤能事先拆清、且希望「先给计划再执行」的任务，比如多步数据核对、理赔 SOP、报表生成的固定步骤。好处是清单可以先落库、走审批、被缓存；坏处是中途发现异常不会自动改计划，除非再加一轮重规划。
+- 类比：工作流引擎里先出执行计划 → 人工确认 → 按 DAG 执行。
+
+**原理：做完再评（Reflection）**
+
+- 形状是「生成 → 批评 → 重写」。批评的标准写在提示词里，是硬约束：不超过 40 字、必须包含 `ORD-1001`、必须说清能不能发。
+- 为什么不再查表：库存 10 已经在草稿的上下文里，审稿这次调用只需要草稿正文。所以 `steps` 和纯 ReAct 一样多，多出来的只有 `draft` 和 `review` 两个字段。
+- 代价是多一次模型调用，延迟大约多一倍；换到的是输出口径稳定。标准越模糊，改出来的东西越像没改；标准越硬，它越接近一个格式校验器。
+- 局限：审稿模型看到的是草稿，没有独立观察。草稿把 PAID 说错了，审稿也可能顺着改。真正的事实校验仍然只能看 `steps` 里的观察。
+- 生产用途：对客话术、合规文案、结构化输出前的自检；也可以当作最便宜的 LLM-as-judge，阶段 5 的评估会展开。
+- 类比：接口返回前过一道网关校验，不合格打回重写。
+
+**在这份代码里，三种策略各自落在哪**
+
+- `PlanningController` 的 `switch` 就是「选形状」的地方。三个实现共用 `FixtureToolDispatcher` 和 `StepRecord`，所以 `not_found`、`invalid_argument`、`latencyMs` 的规则和前几天的页面完全一致。
+- `PlanningModel` 单独成类，是因为 plan 的清单和 reflect 的审稿都需要「不挂工具的一次调用」。它没有 `toolCallbacks`，温度固定 `0.0`：不挂工具，模型这一轮只能写字；温度归零，同一问句的差异才只来自策略，而不是采样抖动。
+- `maxSteps` 只对 react 和 reflect 有意义，plan 的轮次等于清单长度。页面仍统一校验，是为了输入框不用随策略变灰。
+- 三种响应共用一个 `PlanningResponse`，靠哪个字段有值区分：`plan` 只有 plan 策略有，`draft` 和 `review` 只有 reflect 有，react 两个都是 null。页面因此不用写三套渲染。
+
+**落到自己的系统，怎么选**
+
+按这个顺序问自己：
+
+1. 步骤能不能事先写死、而且每单必须一样？ → 固定图（第 9 天），下一跳由 Java 决定，最稳。
+2. 能写死但需要模型帮忙拆？ → 先计划再执行。计划可预览、可审批、可缓存。
+3. 步数随问句变化、下一步依赖上一步结果？ → ReAct。适合排障、客服、多跳查询。
+4. 输出质量要求高、能接受多一次调用？ → 在前面任一种之上加 Reflection。
+
+生产里常见的是组合而不是单选：plan 的每一步内部可以是一个 ReAct，ReAct 的最终句子再过一次 Reflection 审稿。页面把三种分开展示，只是为了字段单独看得清。
+
+成本上，调用次数 × 上下文长度就是费用和延迟：ReAct 的上下文随轮次增长；plan 固定两次但清单可能一次写错；reflect 是在前两者基础上 +1。页面上留的 `elapsedMs` 就是给这个对照用的。
 
 **要写的代码**
 
@@ -589,12 +650,30 @@ run(question, conversationId, maxMessages):
 
 | 类                     | 职责                                                                                                                                                                 |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PlanningController` | `POST /api/stage/03/plan`，入参 `question`、`strategy`（`react` / `plan` / `reflect`）                                                                   |
-| `ReactPlanning`      | 复用第 4 天的手动循环。响应 `strategy=react`，不带执行前的 `plan`                                                                                                |
-| `PlanThenExecute`    | 第一次调用只要求 JSON 步骤，此时不注册工具。然后 Java 按清单查表。最后一次调用把观察交给模型写回答。响应先有 `plan`，再有带 `observation` 的 `steps`           |
+| `PlanningController` | `POST /api/stage/03/plan`，入参 `question`、`strategy`（`react` / `plan` / `reflect`）、`maxSteps`。`switch` 只做分发，不在 Controller 里写任何一份循环 |
+| `ReactPlanning`      | 复用第 4 天的手动循环（`SpringAgentLoop`），不新做一套查单。响应 `strategy=react`，不带执行前的 `plan`。传空 `conversationId`，让每次点击都是新会话 |
+| `PlanThenExecute`    | 第一次调用只要求 JSON 步骤，此时不注册工具。然后 Java 按清单查表，把清单里写成 `null` 的库存参数用订单观察补上。最后一次调用把观察交给模型写回答。响应先有 `plan`，再有带 `observation` 的 `steps` |
 | `ReflectPlanning`    | 先走边想边做得到 `draft`，再发一次检查。标准写在提示里：不超过 40 个字，必须包含 `ORD-1001`，必须说明能不能发。响应含 `draft`、`review`、改写后的 `answer` |
+| `PlanningModel`      | 不挂工具的单次调用。plan 的「写清单」和 reflect 的「审稿」都用它，温度固定 `0.0` |
+| `PlanningResponse`   | 三种策略共用一种响应形状，靠 `plan` / `draft` / `review` 哪个有值来区分。页面因此不用写三套渲染 |
+| `PlanningRequest` / `PlanStep` | 请求体；以及清单里的一步 `{tool, arguments}` |
 
 接通「规划对照」（`/demos/agent-core/plan`）。
+
+**三种策略在字段上的差别（今天真正要记住的）**
+
+| 字段 | react | plan | reflect | 这个字段证明什么 |
+| --- | --- | --- | --- | --- |
+| `plan` | `null` | 有值，查表前就有 | `null` | 清单是在任何观察之前写下的 |
+| `steps` | 每轮一条，随时间变长 | 按清单执行，`finishReason=plan` | 与 react 相同，仍是草稿那几轮 | plan 的执行是 Java 发起的，不是模型点菜 |
+| `draft` | `null` | `null` | 有值 | 第二次调用有东西可改 |
+| `review` | `null` | `null` | 有值，含「通过」或「过长」 | 检验标准是写死在提示里的，不是模型自己想的 |
+| `stopReason` | `final` / `max_steps` | 固定 `final` | 固定 `final` | plan 没有模型反复点菜的循环，轮次等于清单长度 |
+
+两个容易写错的点：
+
+- **plan 的 `finishReason` 不能照抄 `tool_calls`。** 那一轮模型根本没收到工具菜单，是 Java 照着清单在查。字段要如实反映「谁发起这次执行」，否则线上会把「按计划执行」误读成「模型又点了一次菜」。
+- **plan 的 `round` 是清单序号，不是模型请求次数。** react 里 `round` 等于第几次 POST 模型，plan 里它只表示清单的第几步。同一个字段名，在两种策略下含义不同，看页面时要留意。
 
 **伪代码**
 
@@ -606,24 +685,31 @@ run(question, strategy):
     if strategy == "plan":
         plan = 模型(question, 不注册工具,
                     只要求 JSON: [{tool, arguments}, ...])
+        # 清单此刻只能猜：库存的 sku/warehouse 还不知道，模型会写 null
+        known = {}                              # 执行中从订单观察里补的参数
         steps = []
-        for item in plan:
-            observation = dispatch(item.tool, item.arguments)   # 这时才查表
-            steps.add(item + observation)
+        for i, item in plan:
+            arguments = fillArguments(item, known)   # null 用上一步观察补
+            observation = dispatch(item.tool, arguments)   # 这时才查表
+            steps.add({ round: i + 1, finishReason: "plan",
+                        tool: item.tool, arguments, observation })
+            known += 从订单观察抄出 sku、warehouse
         answer = 模型(question + steps, 不注册工具)
         return { plan, steps, answer }
 
     if strategy == "reflect":
-        draft = 第 4 天的循环(question).answer
+        draft = 第 4 天的循环(question)          # 查表只发生在这里
         review = 模型("检查草稿：不超过 40 字，必须含 ORD-1001，必须说明能不能发",
-                      draft)
+                      draft.answer)             # 不注册工具，不再查表
         answer = review 改写后的句子
-        return { draft, review, answer, steps }   # steps 仍只是查表那几轮
+        return { draft, review, answer, steps: draft.steps }
 ```
+
+`fillArguments` 是 plan 独有的。没有它，库存那一步会带着 `null` 去查，得到 `invalid_argument`——这本身也是一种可观察的结果，说明「清单写得太早，参数拿不到」。加上它，才是工程上可用的版本。
 
 **执行计划**
 
-重启后端。三次都打开 [规划对照](http://localhost:5173/demos/agent-core/plan)，问句相同，只改策略后点发送。
+重启后端。三次都打开 [规划对照](http://localhost:5173/demos/agent-core/plan)，问句相同，只改策略后点发送。三次都看页面上方的 `耗时`，它把调用次数的代价直接摊开：react 是「查订单、查库存、写句子」三次调用；plan 是「写清单、写句子」两次，通常最快；reflect 在 react 之上再加一次审稿，最慢。
 
 1. **怎么执行**：策略选「边想边做」，点发送。
    **执行语句**：
@@ -633,8 +719,9 @@ run(question, strategy):
    {"question":"ORD-1001 能不能发货？先查订单再查对应库存。","strategy":"react","maxSteps":4}
    ```
 
-   - **你会看到**：`strategy` 为 `react`。没有事先填好的 `plan`。`steps` 先出现 `getOrder`，其后才出现 `getInventory`。
-   - **为什么**：每一轮只决定当前要不要点菜。库存工具出现在第二轮，是因为第一轮的观察里已经有订单。
+   - **你会看到**：`strategy` 为 `react`。没有事先填好的 `plan`。`steps` 先出现 `getOrder`，其后才出现 `getInventory`。第 3 行是「不再点菜」，`finishReason` 是 `stop`。
+   - **为什么**：每一轮只决定当前要不要点菜。库存工具出现在第二轮，是因为第一轮的观察里已经有订单。这正是 ReAct 的定义——下一步依赖上一步的观察，所以事先无法写出完整计划。
+   - **要记的**：`steps` 的长度不是固定的。换一句更复杂的问句，它可能变成 4 条、5 条。这个「不可预测」就是 ReAct 的代价，也是后面 max_steps 存在的理由。
 2. **怎么执行**：策略改成「先计划再执行」，点发送。
    **执行语句**：
 
@@ -643,8 +730,9 @@ run(question, strategy):
    {"question":"ORD-1001 能不能发货？先查订单再查对应库存。","strategy":"plan","maxSteps":4}
    ```
 
-   - **你会看到**：先有 `plan`，两项工具名是 `getOrder`、`getInventory`，此时还没有观察。随后 `steps` 补上已支付和数量 10。`answer` 在观察填完之后出现。
-   - **为什么**：规划那一次请求里还没有 `PAID` 和 `10`。清单是按问句和菜单写下的。
+   - **你会看到**：先有 `plan` 表格，两项工具名是 `getOrder`、`getInventory`，此时还没有观察；`getInventory` 那行的参数里 `sku` / `warehouse` 可能是 `null`。随后 `steps` 补上已支付和数量 10，`finishReason` 全部是 `plan` 而不是 `tool_calls`。`answer` 在观察填完之后出现。
+   - **为什么**：规划那一次请求里还没有 `PAID` 和 `10`，模型看不到表，只能按问句和菜单猜。`sku` 和 `warehouse` 只有查过订单才知道，所以清单里是 `null`，执行时由 `fillArguments` 从上一步的订单观察补上。
+   - **要记的**：清单里的 `sku` / `warehouse` 是模型猜的，不是查出来的。这份实现用 `fillArguments` 在查表前用真实的订单观察覆盖它，所以即使模型猜了 `SKU-88` 也会被改成真实值。朴素实现若省掉这一步，猜错就会查错库存——这是先计划再执行最常见的线上事故。
 3. **怎么执行**：策略改成「做完再评」，点发送。
    **执行语句**：
 
@@ -653,8 +741,25 @@ run(question, strategy):
    {"question":"ORD-1001 能不能发货？先查订单再查对应库存。","strategy":"reflect","maxSteps":4}
    ```
 
-   - **你会看到**：`draft` 通常比 `answer` 长。`review` 里能看到过长或通过。最终 `answer` 含 `ORD-1001`，并且短于草稿。查表仍是发货所需的那两次。
-   - **为什么**：第二次调用检查的是句子约束。库存已经在草稿的上下文里，改句子不必再查库。
+   - **你会看到**：`draft` 通常比 `answer` 长。`review` 第一行是「过长」或「通过」，后面跟改写后的句子。最终 `answer` 含 `ORD-1001`，并且短于草稿。`steps` 和 react 那次相同，查表仍是发货所需的那两次。
+   - **为什么**：第二次调用检查的是句子约束，不是事实。库存已经在草稿的上下文里，改句子不必再查库，所以 `steps` 没有变长。
+   - **要记的**：`review` 给出的标准是写死在提示里的三条。标准之外的东西它不管——比如草稿把 PAID 说成未支付，只要字数、单号、结论三项满足，审稿不会纠正。事实校验永远只能看 `steps` 里的 `observation`。
+4. **怎么执行**：`【不写代码】` 把策略切回「边想边做」，问句换成只问状态，点发送。
+   **执行语句**：
+
+   ```http
+   POST /api/stage/03/plan
+   {"question":"ORD-1001 现在什么状态？","strategy":"react","maxSteps":4}
+   ```
+
+   - **你会看到**：`steps` 只有 `getOrder` 一条点菜记录，随后就是「不再点菜」。不会有 `getInventory`。
+   - **为什么**：问句里没有发货和库存，模型判断只查订单就够。这和第 9 天固定图的行为正好相反——固定图不管问什么都会把库存查出来。这一个对比就是「Agent 与工作流」在页面上的分界。
+
+**收口：今天要能回答的三个问题**
+
+- 三种策略谁的步数不可预测？——react。它的 `steps` 长度取决于模型每一轮的决定。
+- 哪一种在查表之前就能看到全部步骤？——plan。`plan` 字段在任何 `observation` 之前就有值。
+- 哪一种多花一次调用却没有多查一次表？——reflect。`steps` 与 react 相同，多出来的是 `draft` 和 `review`。
 
 ---
 
@@ -662,14 +767,75 @@ run(question, strategy):
 
 **动手**：`【写代码】`
 
-**学什么**：`StateGraph` 的节点是一步，边是下一步，`OverAllState` 是贯穿节点的 Map。条件边是一段 Java：读状态里的数量，决定走向可发还是不可发。模型不改这条边。
+**学什么**：前八天的「下一步做什么」都由模型在各种 `tool_calls` 里决定。今天换成另一种：**下一步写在代码里**。用 `StateGraph` 把「查订单 → 查库存 → 按条件选文案」摆成一张有向图，节点是一步，边是下一步，`OverAllState` 是贯穿所有节点的那个 Map。模型仍然参与——但它只在最后一个节点里「把已有的事实写成一句话」，不参与选路。
 
-**为了什么**：发货审核希望每单都走过同一组检查。规则放在代码里，数量为 0 时不会被写成「可以发」。
+**为了什么**：发货审核这种业务，要求每一单都走过同一组检查，且事后能对着审计说「这一单经过了哪几个节点」。如果选路由模型决定，模型完全可能因为问句措辞而跳过库存检查。把边写死，`available = 0` 时就**不可能**被说成「可以发」——不是「模型通常不会这么说」，是代码里根本没有那条路径。
 
 **今天读**
 
-- [什么是 Spring AI Alibaba Graph](https://java2ai.com/docs/1.0.0.2/tutorials/graph/whats-spring-ai-alibaba-graph/)。读完应能说出节点、边、全局状态。ReAct 在这套图上只是一种预置走法。
-- [LangGraph 概述](https://docs.langchain.com/oss/python/langgraph/overview)。只读 State、Node、Edge。今天不运行 Python。读完应能说出它和上一篇是同一组概念。
+- [什么是 Spring AI Alibaba Graph](https://java2ai.com/docs/1.0.0.2/tutorials/graph/whats-spring-ai-alibaba-graph/)。读的时候盯住四样东西：`StateGraph`（图本身）、`addNode`（加一步）、`addEdge` / `addConditionalEdges`（连下一步）、`OverAllState`（贯穿的状态）。读完应能说出：节点之间不直接传参，全靠状态 Map。
+- [LangGraph 概述](https://docs.langchain.com/oss/python/langgraph/overview)。只读 State、Node、Edge 三节，不运行任何 Python。读完应能说出：这是同一组概念的另一套实现，Spring AI Alibaba 的 Graph 就是照着 LangGraph 的思路做的。
+
+**三种控制权，分清楚再动手**
+
+这是今天最容易混的地方。Agent 系统里「next 由谁定」有三个层次：
+
+| 层次 | 谁决定下一步 | 你怎么写 | 今天在哪见 |
+| --- | --- | --- | --- |
+| 模型决定 | 模型每一轮看情况选 | 挂工具菜单，写 `while` | 第 2～8 天 |
+| **Java 决定（固定边）** | 代码写死：A 之后必然是 B | `builder.addEdge(A, B)` | `queryOrder → queryInventory` |
+| **Java 决定（条件边）** | 代码读状态判断：走 C 还是 D | `addConditionalEdges(...)` + 一个返回字符串的方法 | `decideBranch` |
+
+**关键认知：图和模型不是对立的。** 图不是「不用模型」，而是「模型被限制在节点内部」。今天的 `writeCopy` 节点照样调模型写句子——但模型拿到的只有已经查好的事实，它没有工具菜单，想再查也没得查。**模型负责表达，Java 负责流程和判断**，这就是工作流的本质。
+
+**原理：StateGraph 的四件套**
+
+用你已经写过的东西类比，这套 API 就是个**带类型的流程编排器**：
+
+- **节点（Node）= 一个方法**：签名是 `Map<String,Object> method(OverAllState state)`。读状态 → 干活 → 返回一个 Map，框架把它合进状态。跟写 `@Service` 方法没本质区别，只是它不把返回值给调用方，而是给「状态」。
+- **边（Edge）= 下一步**：`addEdge(A, B)` 就是「A 跑完必跑 B」。没有条件、没有判断、不看问句。
+- **条件边（Conditional Edge）= 一个返回字符串的方法**：`decideBranch` 读状态里的 `paid` 和 `available`，返回 `"canShip"` 或 `"cannotShip"`，框架拿这个字符串去查一张映射表，决定下一跳。**判断逻辑是纯 Java，模型碰不到。**
+- **状态（OverAllState）= 贯穿全程的 Map**：所有节点共享。节点之间**不直接传参**，这是图编程和普通方法调用的最大差别——`queryInventory` 拿不到 `queryOrder` 的返回值，只能从状态里读。
+
+**原理：状态里的 key 怎么合并（今天最容易踩的坑）**
+
+`KeyStrategyFactory` 声明每个 key 被写第二次时怎么办：
+
+- `KeyStrategy.REPLACE`：后写的覆盖先写的。订单、库存、分支、答案都是这种——各写一次，没有合并需求。
+- `KeyStrategy.APPEND`：累积成一个 List。`nodes` 和 `steps` 用这个，因为「走过哪些节点」「查了几次表」需要越积越多。
+
+**如果 `nodes` 错用成 REPLACE**，页面上的 `nodes` 永远只剩最后一个节点名，你就看不出这条链路经过了哪几步。这是新手第一个 bug。
+
+**原理：图编译一次，跑很多次**
+
+`ShipGraph` 的构造函数里调 `build()`，`build()` 里 `builder.compile(...)` 得到 `CompiledGraph`，之后所有请求共用这一个实例。编译后的图是**只读的**，所以可以做成单例 Bean——跟你把一份规则配置在启动时加载好、请求时只读，是同一个道理。
+
+`compile(CompileConfig.builder().recursionLimit(10).build())` 里的 `recursionLimit` 是**图的死循环保护**。图允许有环（ReAct 在图上就是一个环：模型节点 → 工具节点 → 回到模型节点），既然有环就可能转不停，所以框架给了上限。第 10 天讲停止条件时会再碰到它——这里的 10 就是「最多走 10 步」。今天这张图只有 3～4 步，上限根本到不了，但写了是对的。
+
+**原理：这条边不看问句，所以代价是多查一次**
+
+`queryOrder → queryInventory` 是**固定边**。用户只问「ORD-1001 现在什么状态」，图照样会去查库存——因为那条边不读问句，它只知道「发货审核要看库存」。
+
+这就是工作流的定价：**用「多做一步」换「每次都一样」**。第 8 天的 ReAct 遇到同样的问题只查订单就停了，省了一次调用；但你也无法保证它每次都记得查库存。**一个省钱但不确定，一个费钱但确定**，选哪个取决于业务能不能承受不确定。
+
+**实际作用：生产里怎么用**
+
+工作流适合**规则稳定、要留痕、出错代价高**的场景：
+
+- **发货 / 退款审核**：能不能发由库存和订单状态决定，规则不能随措辞漂移。
+- **理赔、报销**：每一步都要能向审计说明「经过了哪几个节点、每个节点的输入输出是什么」。
+- **风控规则链**：命中哪条规则、走了哪个分支，必须是代码判断，不能是模型判断。
+- **定时巡检**：每天固定跑一遍同一组检查，没有人提问，也就没有「问句」可依据。
+
+配套好处：`nodes` 这个数组天然就是**审计日志**。存进数据库，任何一个结果都能回答「它是怎么来的」。这比只有一句 `answer` 强得多。
+
+**什么时候不该用图**
+
+- 步骤没法预先枚举——比如「这单为什么发不出去」可能牵扯五个系统，走哪条路取决于前一步发现了什么。硬画成图会变成一堆条件边，比 ReAct 还难维护。
+- 问句变化大、每次需要不同的查询组合。这时图的固定边就是在浪费调用。
+- 探索性任务（调研、排障）。图的确定性在这里反而是枷锁。
+
+判据回到第 8 天那句：**能写死就别让模型决定；必须让模型决定时，把上限和确认点钉死在代码里。**
 
 **要写的代码**
 
@@ -677,41 +843,61 @@ run(question, strategy):
 
 | 类                  | 职责                                                                                                                                 |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `ShipGraph`       | 固定边：查订单 → 查库存 → 按条件走向「可发货文案」或「不可发货文案」。两个文案节点只套句子，不再查表。条件：已支付且可用数量大于 0 |
+| `ShipGraph`       | 建图（四个节点 + 两条固定边 + 一条条件边），并对每个请求 `invoke` 一次。图在构造函数里 `compile` 好，之后只读复用 |
 | `GraphController` | `POST /api/stage/03/graph`。入参 `question`，以及可选的 `availableOverride`（只放进这一次的状态，不写回夹具）                  |
+| `GraphRequest` / `GraphResponse` | 请求体；响应含 `nodes`（走过的节点，按顺序）、`branch`、`answer`、`fixtureAvailable`（夹具真实值）、`observations`（两个节点各自看到的 JSON） |
 
-响应含 `nodes`、`branch`（`canShip` / `cannotShip`）、`answer`，以及夹具里的真实可用数量。接通「固定工作流」（`/demos/agent-core/graph`）。
+四个节点分别是：
+
+| 节点 | 干什么 | 往状态里写 |
+| --- | --- | --- |
+| `queryOrder` | 查 ORD-1001 | `orderJson`、追加 `nodes` / `steps` |
+| `queryInventory` | 查 SKU-88 在 WH-A | `available`（override 优先）、追加 `nodes` / `steps` |
+| `canShipCopy` | 让模型写「可以发」 | `answer`、`branch`、追加 `nodes` |
+| `cannotShipCopy` | 让模型写「不能发」 | 同上 |
+
+`availableOverride` 是为了让你**在不改夹具的前提下**把一次运行的判断条件改成 0，从而看到条件边走向另一边。类比：演练/预演环境里改一个参数跑一遍，生产数据不动。响应里同时给出 `fixtureAvailable`，页面上一眼就能对照「状态里是 0，表里还是 10」。
 
 **伪代码**
 
 ```text
-run(question, availableOverride):
-    state = {}
-    nodes = []
+建图（只做一次）:
+    strategies = { 其余 key: REPLACE, nodes: APPEND, steps: APPEND }
+    g = StateGraph(strategies)
+    g.addNode("queryOrder",     读状态 → 查订单 → 返回 {orderJson, nodes, steps})
+    g.addNode("queryInventory", 读状态 → 查库存 → 返回 {available, nodes, steps})
+    g.addNode("canShipCopy",    读状态 → 模型写一句 → 返回 {answer, branch, nodes})
+    g.addNode("cannotShipCopy", 同上)
+    g.addEdge(START, "queryOrder")
+    g.addEdge("queryOrder", "queryInventory")           # 固定边：不看问句
+    g.addConditionalEdges("queryInventory", decideBranch,
+        { canShip: "canShipCopy", cannotShip: "cannotShipCopy" })
+    g.addEdge("canShipCopy", END)
+    g.addEdge("cannotShipCopy", END)
+    return g.compile(recursionLimit = 10)
 
-    state.order = orderStore.get("ORD-1001")          # 节点：查订单
-    nodes.add("queryOrder")
-    edge: queryOrder -> queryInventory                 # 固定边，不看模型
+decideBranch(state):                                     # 纯 Java，模型改不了
+    paid = state.orderJson 含 "status":"PAID"
+    available = state.available
+    return paid 且 available > 0 ? "canShip" : "cannotShip"
 
-    qty = availableOverride 若有值，否则 inventoryStore 的 10
-    state.available = qty
-    nodes.add("queryInventory")
-
-    if state.order 已支付 且 state.available > 0:      # 条件边是 Java
-        state.branch = "canShip"
-        nodes.add("canShipCopy")
-    else:
-        state.branch = "cannotShip"
-        nodes.add("cannotShipCopy")
-
-    answer = 模型(只根据 state 写一句话)               # 文案节点不再查表
-    return { nodes, branch: state.branch, answer,
-             fixtureAvailable: 10 }                    # 夹具本身不被 override 改写
+run(question, availableOverride):                        # 每个请求都走这里
+    result = 编译好的图.invoke({question, availableOverride?})
+    return { nodes: result.nodes, branch: result.branch,
+             answer: result.answer,
+             fixtureAvailable: 10,                       # 从 Store 重新读，override 不影响它
+             observations: result.steps }
 ```
+
+三个要盯住的细节：
+
+- **`decideBranch` 返回的是字符串，不是布尔。** 框架拿这个字符串去查 `Map.of("canShip", ...)`，所以**返回值和映射表的 key 必须对得上**，拼错会直接运行时报错。这是条件边唯一的坑。
+- **`queryInventory` 的参数写死 `SKU-88` / `WH-A`，不从问句解析。** 因为这条边根本不关心用户问了什么——它只知道「发货审核要看库存」。真实系统里这里会从状态里的订单 JSON 读 sku，今天的写法是简化版。
+- **`fixtureAvailable` 和 `available` 是两个数。** 前者永远从 `InventoryStore` 读，后者可能是 override。两者都返回，就是为了让「状态可改、夹具不可改」这件事在页面上看得见。
 
 **执行计划**
 
-重启后端。
+重启后端。三步都在 [固定工作流](http://localhost:5173/demos/agent-core/graph)。
 
 1. **怎么执行**：打开 [固定工作流](http://localhost:5173/demos/agent-core/graph)。问句只问状态，「本次判断用的可用数量」留空，点发送。
    **执行语句**：
@@ -721,8 +907,9 @@ run(question, availableOverride):
    {"question":"ORD-1001 现在什么状态？"}
    ```
 
-   - **你会看到**：`nodes` 依次含查订单、查库存、可发货文案。`branch` 为 `canShip`。回答里会提到库存。夹具数量是 10。
-   - **为什么**：下一跳是 `addEdge` 写上的，不是 `tool_calls` 选的。多查一次库存是这条边的代价。
+   - **你会看到**：`nodes` 是 `queryOrder`、`queryInventory`、`canShipCopy` 三个。`branch` 为 `canShip`。回答里会提到库存。`fixtureAvailable` 是 10。`observations` 里有两条，分别是订单和库存的 JSON。
+   - **为什么**：下一跳是 `addEdge` 写上的，不是 `tool_calls` 选的。用户只问状态，图仍然查了库存——那条边不看问句。
+   - **要记的**：这就是工作流的定价。用它换来了「每一单都必然查库存」的确定性。
 2. **怎么执行**：打开 [规划对照](http://localhost:5173/demos/agent-core/plan)，策略选「边想边做」，问句与上一句相同，点发送。
    **执行语句**：
 
@@ -731,8 +918,9 @@ run(question, availableOverride):
    {"question":"ORD-1001 现在什么状态？","strategy":"react","maxSteps":4}
    ```
 
-   - **你会看到**：`steps` 里通常只有 `getOrder`。
+   - **你会看到**：`steps` 里通常只有 `getOrder`，然后就没再点菜。
    - **为什么**：菜单允许模型只点它认为需要的工具。问句里没有发货和库存，它就停在订单。
+   - **要记的**：**这一对对比就是今天的全部主题。** 同一句问句，Agent 省了一次查询但不保证查了库存；工作流多查一次但每次都一样。生产里选哪个，取决于「漏查库存能不能接受」。
 3. **怎么执行**：回到固定工作流，把「本次判断用的可用数量」填 `0`，问句改成发货，点发送。
    **执行语句**：
 
@@ -741,8 +929,15 @@ run(question, availableOverride):
    {"question":"ORD-1001 能不能发货？先查订单再查对应库存。","availableOverride":0}
    ```
 
-   - **你会看到**：`branch` 为 `cannotShip`，走不可发货文案。页面上夹具里的 SKU-88 仍是 10。
-   - **为什么**：条件边读的是这次放进状态的数字。夹具没有被写方法改掉。
+   - **你会看到**：`nodes` 变成 `queryOrder`、`queryInventory`、`cannotShipCopy`。`branch` 为 `cannotShip`。而 `fixtureAvailable` 仍然是 10。
+   - **为什么**：条件边读的是这次放进状态里的 `available = 0`，而 `fixtureAvailable` 是从 `InventoryStore` 重新读的，override 从头到尾没碰过 Store。
+   - **要记的**：`available` 和 `fixtureAvailable` 是两个数，这个对照证明了「状态（一次运行的临时数据）」和「夹具（持久数据）」是两层。这也是演练、灰度、dry-run 能不改生产数据就验证分支逻辑的原因。
+
+**收口：今天要能回答的三个问题**
+
+- 下一跳是谁定的？——`addEdge` 和 `addConditionalEdges`，都是 Java。模型只在节点内部写句子。
+- 只问状态为什么还查了库存？——因为 `queryOrder → queryInventory` 是固定边，它不看问句。
+- 数量为 0 为什么不可能被说成「可以发」？——因为 `decideBranch` 是 Java，走不到 `canShipCopy` 那个节点。
 
 ---
 

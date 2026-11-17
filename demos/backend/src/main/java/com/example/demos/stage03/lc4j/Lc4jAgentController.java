@@ -25,6 +25,10 @@ public class Lc4jAgentController {
         if (body == null || !StringUtils.hasText(body.question())) {
             throw new IllegalArgumentException("question 不能为空");
         }
+        /*
+         * 上下限与 /spring-ai 一致：1 到 40 条。写成 1 时窗口只留一条，
+         * 第二句就取不到第一句，正好能用来看「窗口太小会忘掉」。
+         */
         int maxMessages = body.maxMessages() == null ? 20 : body.maxMessages();
         if (maxMessages < 1 || maxMessages > 40) {
             throw new IllegalArgumentException("maxMessages 取值 1 到 40，默认 20");

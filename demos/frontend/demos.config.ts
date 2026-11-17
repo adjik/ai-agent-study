@@ -28,6 +28,7 @@ export type DemoView =
   | 'agentLoop'
   | 'agentSpring'
   | 'agentLangchain4j'
+  | 'agentPlan'
   | 'placeholder'
 
 export interface DemoEndpoint {
@@ -430,7 +431,21 @@ export const DEMO_SERVICES: DemoService[] = [
           notes: ['AiServices 背后仍是工具循环', 'MessageWindowChatMemory 按条数留最近的消息', '带工具调用的消息被裁时结果一并裁'],
         },
       },
-      planned('agent-core', 'plan', '规划对照', '/stage/03/plan'),
+      {
+        id: 'plan',
+        title: '规划对照',
+        description:
+          'POST /api/stage/03/plan。同一句问句换 strategy：react 每轮由模型选工具；plan 先写清单再查表；reflect 先出草稿再检查。看的是 plan / draft / review 三个字段谁有值。',
+        route: '/demos/agent-core/plan',
+        method: 'POST',
+        apiPath: '/stage/03/plan',
+        view: 'agentPlan',
+        learning: {
+          plan: ['阶段 3 · Agent Loop'],
+          stageDoc: '第 8 天 · 三种规划各看一次字段',
+          notes: ['边想边做没有事先的 plan', '先计划再执行：清单在观察之前', '做完再评：多一次调用只改句子'],
+        },
+      },
       planned('agent-core', 'graph', '固定工作流', '/stage/03/graph'),
       planned('agent-core', 'guard', '停止与边界', '/stage/03/guard'),
     ],

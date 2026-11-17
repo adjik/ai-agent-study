@@ -97,6 +97,29 @@ export interface Lc4jAgentBody {
   maxMessages: number
 }
 
+export type PlanningStrategy = 'react' | 'plan' | 'reflect'
+
+/** 查表之前写下的清单。参数可能还是 null，执行时才补。 */
+export interface PlanStep {
+  tool: string
+  arguments: string
+}
+
+/**
+ * 规划对照的响应。哪个字段有值就说明用的是哪种策略：
+ * plan 只有「先计划再执行」有值；draft / review 只有「做完再评」有值。
+ */
+export interface PlanningResponse {
+  strategy: PlanningStrategy
+  answer: string
+  stopReason: string
+  steps: StepRecord[]
+  plan: PlanStep[] | null
+  draft: string | null
+  review: string | null
+  fixture: FixtureSummary
+}
+
 export const agentCoreApi = {
   /** Vite 把 /api 代理到 8080，这里写的是代理后面的路径。 */
   loop: (question: string, maxSteps: number) =>
@@ -112,4 +135,10 @@ export const agentCoreApi = {
   /** 同一份 Store、同一句问题，工具循环由 AiServices 跑。 */
   langchain4j: (body: Lc4jAgentBody) =>
     http.post<Lc4jAgentResponse>('/stage/03/langchain4j', body).then((response) => response.data),
+
+  /** 同一句问题，strategy 决定下一步由谁定：模型每轮选、先写清单、还是先出草稿再检查。 */
+  plan: (question: string, strategy: PlanningStrategy, maxSteps: number) =>
+    http
+      .post<PlanningResponse>('/stage/03/plan', { question, strategy, maxSteps })
+      .then((response) => response.data),
 }
