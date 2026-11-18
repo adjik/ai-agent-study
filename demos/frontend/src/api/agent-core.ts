@@ -120,6 +120,22 @@ export interface PlanningResponse {
   fixture: FixtureSummary
 }
 
+/**
+ * 固定工作流的响应。
+ * nodes / branch 是「下一步由 Java 定」的证据：nodes 按顺序列出走过的节点。
+ */
+export interface GraphResponse {
+  /** 本次实际查的单号：从问句抽出，抽不到是兜底值 ORD-1001 */
+  orderId: string
+  nodes: string[]
+  branch: string
+  answer: string
+  /** 夹具里的真实可用数量。传了 availableOverride 也不会变；订单没查到时为 0 */
+  fixtureAvailable: number
+  /** 两个查询节点各自看到的 JSON */
+  observations: StepRecord[]
+}
+
 export const agentCoreApi = {
   /** Vite 把 /api 代理到 8080，这里写的是代理后面的路径。 */
   loop: (question: string, maxSteps: number) =>
@@ -140,5 +156,14 @@ export const agentCoreApi = {
   plan: (question: string, strategy: PlanningStrategy, maxSteps: number) =>
     http
       .post<PlanningResponse>('/stage/03/plan', { question, strategy, maxSteps })
+      .then((response) => response.data),
+
+  /**
+   * 固定工作流。availableOverride 只影响这一次的条件边，不改库存夹具；
+   * 不传（undefined）时请求体里不会出现这个字段，后端按读夹具处理。
+   */
+  graph: (question: string, availableOverride?: number) =>
+    http
+      .post<GraphResponse>('/stage/03/graph', { question, availableOverride })
       .then((response) => response.data),
 }

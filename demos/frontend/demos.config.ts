@@ -29,6 +29,7 @@ export type DemoView =
   | 'agentSpring'
   | 'agentLangchain4j'
   | 'agentPlan'
+  | 'agentGraph'
   | 'placeholder'
 
 export interface DemoEndpoint {
@@ -446,7 +447,21 @@ export const DEMO_SERVICES: DemoService[] = [
           notes: ['边想边做没有事先的 plan', '先计划再执行：清单在观察之前', '做完再评：多一次调用只改句子'],
         },
       },
-      planned('agent-core', 'graph', '固定工作流', '/stage/03/graph'),
+      {
+        id: 'graph',
+        title: '固定工作流',
+        description:
+          'POST /api/stage/03/graph。StateGraph 把查订单 → 查库存 → 按条件选文案连成一张图，下一跳由 addEdge 写死。可用数量填 0 只改这一次的状态，夹具仍是 10。',
+        route: '/demos/agent-core/graph',
+        method: 'POST',
+        apiPath: '/stage/03/graph',
+        view: 'agentGraph',
+        learning: {
+          plan: ['阶段 3 · Agent Loop'],
+          stageDoc: '第 9 天 · 下一步写在边上',
+          notes: ['StateGraph 节点与边', 'OverAllState 是贯穿的 Map', '条件边是 Java，模型改不了'],
+        },
+      },
       planned('agent-core', 'guard', '停止与边界', '/stage/03/guard'),
     ],
   },
