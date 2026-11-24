@@ -136,6 +136,33 @@ export interface GraphResponse {
   observations: StepRecord[]
 }
 
+/** 停止与边界的一步。executed=false 表示模型点了菜但没真的执行。 */
+export interface GuardStep {
+  round: number
+  finishReason: string
+  toolName: string | null
+  arguments: string | null
+  observation: string | null
+  executed: boolean
+  /** 为什么没执行，或这一轮为什么停 */
+  note: string
+}
+
+/**
+ * 停止与边界的响应。stopReason 三选一：
+ * final（不再点菜）/ max_steps（步数用尽）/ waiting_human（写操作等确认）。
+ */
+export interface GuardResponse {
+  stopReason: string
+  answer: string
+  steps: GuardStep[]
+  /** 只在 waiting_human 时有值，确认接口用它找回暂停的调用 */
+  runId: string | null
+  refunded: boolean
+  fixtureAvailable: number
+  pendingTool: string | null
+}
+
 export const agentCoreApi = {
   /** Vite 把 /api 代理到 8080，这里写的是代理后面的路径。 */
   loop: (question: string, maxSteps: number) =>
@@ -166,4 +193,12 @@ export const agentCoreApi = {
     http
       .post<GraphResponse>('/stage/03/graph', { question, availableOverride })
       .then((response) => response.data),
+
+  /** 开始一次带闸门的运行。可能直接结束，也可能停在 waiting_human 等确认。 */
+  guard: (question: string, maxSteps: number) =>
+    http.post<GuardResponse>('/stage/03/guard', { question, maxSteps }).then((response) => response.data),
+
+  /** 用上一次响应里的 runId 接上暂停的运行。只有这条路径会真的执行退款。 */
+  confirmGuard: (runId: string) =>
+    http.post<GuardResponse>('/stage/03/guard/confirm', { runId }).then((response) => response.data),
 }

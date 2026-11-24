@@ -30,6 +30,7 @@ export type DemoView =
   | 'agentLangchain4j'
   | 'agentPlan'
   | 'agentGraph'
+  | 'agentGuard'
   | 'placeholder'
 
 export interface DemoEndpoint {
@@ -462,7 +463,21 @@ export const DEMO_SERVICES: DemoService[] = [
           notes: ['StateGraph 节点与边', 'OverAllState 是贯穿的 Map', '条件边是 Java，模型改不了'],
         },
       },
-      planned('agent-core', 'guard', '停止与边界', '/stage/03/guard'),
+      {
+        id: 'guard',
+        title: '停止与边界',
+        description:
+          'POST /api/stage/03/guard。三种停法：步数上限、菜单里没有的方法、写操作等确认。退款请求先返回 runId，POST /guard/confirm 才真的执行。',
+        route: '/demos/agent-core/guard',
+        method: 'POST',
+        apiPath: '/stage/03/guard',
+        view: 'agentGuard',
+        learning: {
+          plan: ['阶段 3 · Agent Loop'],
+          stageDoc: '第 10 天 · 三种停法',
+          notes: ['上限写在循环里', '菜单决定能做什么', '写操作要人工确认'],
+        },
+      },
     ],
   },
   {
