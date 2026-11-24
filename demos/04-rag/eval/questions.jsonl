@@ -1,0 +1,12 @@
+{"id":1,"question":"去上海出差住宿一晚最多报多少","expectedFile":"travel-expense.md","expectedKeyword":"600"}
+{"id":2,"question":"出差坐高铁能坐几等座","expectedFile":"travel-expense.md","expectedKeyword":"二等座"}
+{"id":3,"question":"出差回来几天内要交报销单","expectedFile":"travel-expense.md","expectedKeyword":"15 个自然日"}
+{"id":4,"question":"年假有多少天，怎么算","expectedFile":"leave-policy.md","expectedKeyword":"年假"}
+{"id":5,"question":"请病假要交什么材料","expectedFile":"leave-policy.md","expectedKeyword":"病假证明"}
+{"id":6,"question":"连续旷工几天公司可以解除合同","expectedFile":"leave-policy.md","expectedKeyword":"连续旷工 3 天"}
+{"id":7,"question":"生产库挂了第一步做什么","expectedFile":"ops-runbook.md","expectedKeyword":"确认影响面"}
+{"id":8,"question":"数据库主从延迟告警怎么处理","expectedFile":"ops-runbook.md","expectedKeyword":"主从延迟"}
+{"id":9,"question":"线上回滚需要谁审批","expectedFile":"ops-runbook.md","expectedKeyword":"值班负责人审批"}
+{"id":10,"question":"合同里的违约金上限一般写多少","expectedFile":"contract-review.md","expectedKeyword":"30%"}
+{"id":11,"question":"对方要求独家条款怎么处理","expectedFile":"contract-review.md","expectedKeyword":"评估"}
+{"id":12,"question":"合同盖章前要核对哪几项","expectedFile":"contract-review.md","expectedKeyword":"盖章前核对"}

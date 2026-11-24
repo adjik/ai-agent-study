@@ -23,11 +23,14 @@ ai-agent-study/
 │   ├── learning-plan.md   # 分阶段学习计划（任务 S{N}-T* + 完成判据）
 │   ├── stage-1.md         # 阶段 1 每天操作 D*-O*
 │   ├── stage-2.md         # 阶段 2 整合学习（必知+操作+§9+写代码日历）
+│   ├── stage-3.md         # 阶段 3：Agent 核心 10 天操作
+│   ├── stage-4.md         # 阶段 4：RAG 与记忆 14 天操作
 │   └── resources.md       # 学习资料汇总（课程/书籍/仓库/链接）
 ├── notes/                 # 学习笔记（知识 K*，每节有必知 / 怎么做 / 资料）
 │   ├── llm-basics.md      # 阶段 0：Token / 窗口 / 温度 / 幻觉
 │   ├── prompt-engineering.md # 阶段 1：K1–K20
-│   └── tool-use.md        # 阶段 2：已合并至 docs/stage-2.md（跳转页）
+│   ├── tool-use.md        # 阶段 2：已合并至 docs/stage-2.md（跳转页）
+│   └── rag.md             # 阶段 4：K1–K28 + §9 对照表
 ├── demos/                 # 练手 demo，按阶段递增编号
 │   ├── backend/           # 统一 Java 后端（:8080），stage00～stage06 分包
 │   ├── frontend/          # 统一 Vue 控制台（/api 代理到 backend）
@@ -35,7 +38,7 @@ ai-agent-study/
 │   ├── 01-hello-llm/      # 阶段1：提示词工程
 │   ├── 02-tool-use/       # 阶段2：Function Calling
 │   ├── 03-agent-core/     # 阶段3：Agent 框架
-│   ├── 04-rag/            # 阶段4：RAG
+│   ├── 04-rag/            # 阶段4：RAG（data 夹具 + eval 评估集 + README）
 │   ├── 05-multi-agent/    # 阶段5：多 Agent / MCP
 │   └── 06-project/        # 阶段6：综合落地项目
 └── resources/             # 下载的资料、源码、模型配置等
@@ -65,6 +68,6 @@ ai-agent-study/
 - [ ] 阶段 1：提示词工程 —— 资料已就绪；按 [stage-1.md](docs/stage-1.md) 打勾
 - [ ] 阶段 2：Function Calling / Tool Use —— 资料已就绪、代码待做；从 [stage-2.md D0](docs/stage-2.md) 直连 API 看 `tool_calls`
 - [ ] 阶段 3：Agent 核心概念与框架
-- [ ] 阶段 4：RAG 与记忆
+- [ ] 阶段 4：RAG 与记忆 —— 资料已就绪（14 天）；操作见 [stage-4.md](docs/stage-4.md)，知识见 [rag.md](notes/rag.md)
 - [ ] 阶段 5：MCP / 多 Agent / 工程化
 - [ ] 阶段 6：综合落地项目

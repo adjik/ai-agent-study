@@ -1,11 +1,11 @@
 # AI Agent 学习资料汇总（Java 主线版）
 
 > 更新日期：2026-09-10（信息已核对为 2025-2026 最新）
-> 配套路线见 [learning-plan.md](learning-plan.md)；阶段 1 见 [stage-1.md](stage-1.md)；阶段 2 见 [stage-2.md](stage-2.md)；阶段 3 的每天阅读写在 [stage-3.md](stage-3.md) 当天小节里
+> 配套路线见 [learning-plan.md](learning-plan.md)；阶段 1 见 [stage-1.md](stage-1.md)；阶段 2 见 [stage-2.md](stage-2.md)；阶段 3 的每天阅读写在 [stage-3.md](stage-3.md) 当天小节里；阶段 4 见 [stage-4.md](stage-4.md)
 
 **怎么用这份清单**：每个阶段 **先动手、再看博客、卡住才查官方文档**。长课程和书放在文末当手册，**不进阶段验收**。阶段专题（文末）才是当天要打开的东西。
 
-**目录**：[框架选型](#sec-stack) · [MCP](#sec-mcp) · [Demo 清单](#sec-demos) · [课程](#sec-courses) · [书籍](#sec-books) · [开源仓库](#sec-repos) · [落地路线图](#sec-roadmap) · **[阶段 1：提示词工程](#stage-1)** · **[阶段 2：Tool Use](#stage-2)** · 阶段 3 每天的博客在 [stage-3.md](stage-3.md)
+**目录**：[框架选型](#sec-stack) · [MCP](#sec-mcp) · [Demo 清单](#sec-demos) · [课程](#sec-courses) · [书籍](#sec-books) · [开源仓库](#sec-repos) · [落地路线图](#sec-roadmap) · **[阶段 1：提示词工程](#stage-1)** · **[阶段 2：Tool Use](#stage-2)** · 阶段 3 每天的博客在 [stage-3.md](stage-3.md) · **[阶段 4：RAG 与记忆](#stage-4)**
 
 ---
 
@@ -306,3 +306,95 @@ curl -sS http://localhost:8080/api/stage/02/chat \
 - 吴恩达 Agentic AI 课、Chip Huyen 全书
 - 把库存改成真 MySQL / Dubbo（阶段 6）；本阶段内存 Store 即可
 
+
+---
+
+<a id="stage-4"></a>
+
+## 阶段 4：RAG 与记忆专题（实操 + 博客）
+
+> 当天打开 [stage-4.md](stage-4.md)。知识点在 [rag.md](../notes/rag.md)（K1–K28，每节必知 / 怎么做 / 资料）。
+> Java 写在 `demos/backend` 的 `stage04` 包，端口 8080。文档夹具在 `demos/04-rag/data/`。**不要求看完任何一门课、不要求读任何一本书。**
+
+### 开始前必须先确认的两件事
+
+1. **DeepSeek 没有 embeddings 接口**（实测 `POST https://api.deepseek.com/embeddings` 返回 404）。向量化用本地 ONNX 模型：
+
+   ```xml
+   <dependency>
+     <groupId>dev.langchain4j</groupId>
+     <artifactId>langchain4j-embeddings-bge-small-zh-v15-q</artifactId>
+     <version>1.12.1-beta21</version>
+   </dependency>
+   ```
+
+   `new BgeSmallZhV15QuantizedEmbeddingModel()`，512 维，模型打进 jar，离线可用，不新增 key。
+
+2. **用你已有的内网 Redis，不装本地服务**。配置走环境变量（`.env` 已在 `.gitignore`）：
+
+   ```properties
+   REDIS_HOST=10.0.0.12
+   REDIS_PORT=6379
+   REDIS_PASSWORD=你的密码
+   REDIS_DB=0
+   ```
+
+   ```bash
+   redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" -a "$REDIS_PASSWORD" --no-auth-warning ping
+   # 真正判定能不能当向量库，看这两条命令是否都 OK
+   redis-cli ... JSON.SET stage04:probe '$' '{"ok":1}'     # 需要 RedisJSON
+   redis-cli ... FT.CREATE stage04:probe-idx ON JSON PREFIX 1 stage04:probe: SCHEMA $.ok NUMERIC   # 需要 RediSearch
+   ```
+
+   - 两条都 `OK` → **路线 A**，用 `RedisEmbeddingStore`
+   - 有任意一条 `unknown command` → **路线 B**，向量落 `demos/04-rag/vector-data/index.json`，Redis 只当记忆仓库（`StoreType.STRING`）
+
+   **别信文档，自己跑命令验证**。内网 Redis 常禁用 `MODULE LIST`，直接上真实命令更准。
+
+### 今天就动手
+
+1. **D1**：不要先写 Java。先用阶段 3 的 `/api/stage/03/loop` 问一个只有公司制度里才有答案的问题，看它编；再把文档片段手贴进 `question`，看它答对。
+2. **D2 起**：在 `stage04` 写 `EmbeddingController`，让两句话变成两个 512 维向量，算余弦。
+3. **D6 是里程碑**：`POST /api/stage/04/query` 返回 `answer` + `sources` + `promptChars`，`answer` 里的数字要能对上 `sources[0].text` 的原文。
+
+```bash
+curl -sS http://localhost:8080/api/stage/04/query \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"去上海出差住宿一晚最多报多少","topK":3}'
+```
+
+前端占位：`http://localhost:5173/demos/rag/query`（未接通前用 curl）
+
+### 建议看的博客 / 文档（每篇 10–25 分钟，看完马上去改代码）
+
+| 顺序 | 文章 | 看完立刻做什么 |
+| --- | --- | --- |
+| 1 | [Anthropic：Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval) | D1 与 D3 各读一次；第 11 天读全文（BM25 + 向量混合） |
+| 2 | [LangChain4j：RAG](https://docs.langchain4j.dev/tutorials/rag) | D3 切块、D6 装配 Augmentor、D7 元数据过滤、D11 聚合器 |
+| 3 | [LangChain4j：Embedding Models](https://docs.langchain4j.dev/tutorials/embedding-models) | D2：`embed()` 返回 `Embedding`（内含 `float[]`） |
+| 4 | [Redis：Vector similarity search](https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/vectors/) | D4 读概念，D5 读命令（KNN / 距离度量 / 归一化）；**路线 B 只读不落地** |
+| 5 | [Redis：FT.CREATE](https://redis.io/docs/latest/commands/ft.create/) | D5：`VECTOR` 段的 `TYPE/DIM/DISTANCE_METRIC` |
+| 6 | [Spring AI：RAG](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html) | D8：`VectorStoreDocumentRetriever` + `RetrievalAugmentationAdvisor` |
+| 7 | [Spring AI：Redis Vector Store](https://docs.spring.io/spring-ai/reference/api/vectordbs/redis.html) | D8：只读配置项，**不要照抄依赖坐标** |
+| 8 | [LangChain4j：Chat Memory](https://docs.langchain4j.dev/tutorials/chat-memory) | D12：`ChatMemoryStore` 与窗口实现 |
+| 9 | [DeepSeek 定价](https://api-docs.deepseek.com/zh-cn/quick_start/pricing) | D13：记输入 / 输出单价，算 `promptChars` 换算 |
+
+可选对照：
+
+- [BAAI/bge-small-zh-v1.5 模型卡](https://huggingface.co/BAAI/bge-small-zh-v1.5) —— 只读简介表（中文、512 维）
+- [LangChain4j：Redis Embedding Store](https://docs.langchain4j.dev/integrations/embedding-stores/redis) —— D5 卡住时查 `builder` 参数
+- [Spring AI：Vector Databases](https://docs.spring.io/spring-ai/reference/api/vectordbs.html) —— 只用来对照「还有哪些向量库」，本阶段不装
+
+### 卡住再查（当 Javadoc，不要通读）
+
+- LangChain4j `EmbeddingStoreContentRetriever` / `DefaultRetrievalAugmentor` / `ReRankingContentAggregator` 的 Javadoc
+- Redis `FT.INFO` / `FT.SEARCH` 命令页（排查索引为什么不生效）
+- [LangChain4j GitHub issues](https://github.com/langchain4j/langchain4j/issues) —— `RedisEmbeddingStore` 相关，搜维度 / 索引报错
+
+### 本阶段不要看 / 不要做
+
+- 在本地另起一套 Redis（已有的内网 Redis 直接用，密码走环境变量）
+- pgvector、Milvus、Chroma 的安装与实战（只读概念）
+- 微调 embedding 模型（要训练数据和 GPU，收益小于改切块）
+- query 改写（HyDE / Multi-Query）、Agentic RAG（阶段 5）
+- 把夹具换成真实公司文档（阶段 6，要先解决格式、权限、增量更新）

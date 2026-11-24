@@ -2,7 +2,7 @@
 
 > 适用人群：资深 Java Web 后端工程师（Spring Boot / Dubbo / MySQL / Redis 生态），零 AI 基础 | 环境：macOS | 更新日期：2026-09-10
 > 配套资料见 [resources.md](resources.md)，每个阶段的产出落地在 `demos/` 对应目录。
-> **怎么判定一项任务完成**：阶段 1、阶段 2 看「阶段文档三层约定」。阶段 3 要掌握的知识点在本文件，每天的博客、代码和页面步骤在 [stage-3.md](stage-3.md)。阶段 4 起再按三层约定改造。
+> **怎么判定一项任务完成**：阶段 1、阶段 2 看「阶段文档三层约定」。阶段 3 要掌握的知识点在本文件，每天的博客、代码和页面步骤在 [stage-3.md](stage-3.md)。阶段 4 已按三层约定改造（操作见 [stage-4.md](stage-4.md)，知识见 [rag.md](../notes/rag.md)）；阶段 5、6 进入时再改。
 
 ---
 
@@ -48,7 +48,7 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 
 ---
 
-## 阶段文档三层约定（阶段 1、2，以及阶段 4 起）
+## 阶段文档三层约定（阶段 1、2 已用，阶段 4 已用；阶段 5、6 进入时再改）
 
 阶段 3 不另拆任务号、操作号、知识号。要掌握的点在下面「阶段 3」一节；每天读什么、写什么代码、页面上会看到什么，在 [stage-3.md](stage-3.md)。
 
@@ -76,6 +76,7 @@ AI Agent 开发 = **LLM 能力理解（基础） + 工具调用与编排（核�
 5. 未完成这 4 步，不要开始写该阶段 demo 代码。
 
 阶段 1 样板：任务在下面 S1-T1～T7 → 操作 [stage-1.md](stage-1.md) → 知识 [prompt-engineering.md](../notes/prompt-engineering.md)。
+阶段 4 样板：S4-T1～T8 → 操作 [stage-4.md](stage-4.md) → 知识 [rag.md](../notes/rag.md)。
 阶段 2 样板：S2-T1～T7 → 整合文档 [stage-2.md](stage-2.md)（操作 + 必知 K* + §9 对照表，一份读完）。
 阶段 3：知识点在本文件，10 天操作在 [stage-3.md](stage-3.md)。页面路径与 `demos/frontend/demos.config.ts` 里「Agent 核心」菜单一致。
 
@@ -793,38 +794,325 @@ Java 写在统一后端 `demos/backend` 的 `stage03` 包。订单和库存沿�
 
 ---
 
-## 阶段 4：RAG 与记忆（3-4 周）
+## 阶段 4：RAG 与记忆（14 天 / 3-4 周）
 
-> **进入本阶段第一件事**：按「三层约定」新建 `docs/stage-4.md` + `notes/rag.md`，把下面每条 S4-T 拆成每天 `D*-O*` 和知识 `K*`。未完成改造，不要开始写 demo。
-> 当前完成判据：本段 S4-T1～T8 全部打勾 + 文档问答 demo 可运行。
+> 每天读哪篇、写哪些类、在哪个页面看什么结果，写在 [stage-4.md](stage-4.md)。本节只写这一阶段在学什么、需要了解什么、必须掌握什么。
+> 知识笔记：[rag.md](../notes/rag.md)（K1–K28）· 博客：[resources.md#stage-4](resources.md#stage-4)
 
-**目标**：掌握让 Agent「知道文档内容」的能力（RAG）与记忆设计。**Java 侧 LangChain4j 的 RAG 能力最强，本阶段以它为主线**。类比：RAG = 给 LLM 加一个可查询的企业知识库缓存层。
+Java 写在统一后端 `demos/backend` 的 `stage04` 包。文档夹具在 `demos/04-rag/data/`（四份虚构公司制度），评估集在 `demos/04-rag/eval/questions.jsonl`（12 条）。
 
-- [ ] **S4-T1** Embedding 向量化：什么是 embedding、余弦相似度、Chunk 切分策略
-  - 知识 / 操作：待拆进 `notes/rag.md` + `docs/stage-4.md`
-- [ ] **S4-T2** 向量库选型：Redis（`RedisEmbeddingStore`）/ pgvector / Milvus / Chroma（Python 练手）
-  - 知识 / 操作：待拆进 stage-4 + rag 笔记（按已有基础设施选一个主库）
-- [ ] **S4-T3** RAG 完整链路（LangChain4j）：Loader → Splitter → Embedding → Store → TopK → RetrievalAugmentor → ContentRetriever/Aggregator
-  - 知识 / 操作：待拆进 stage-4 + rag 笔记（本阶段主线里程碑）
-- [ ] **S4-T4** Spring AI 版 RAG：`VectorStore` + `SimpleVectorStore` / pgvector / Redis
-  - 知识 / 操作：待拆进 stage-4 + rag 笔记
-- [ ] **S4-T5** 进阶检索：BM25+向量混合、多路召回+Rerank、Agentic RAG
-  - 知识 / 操作：待拆进 stage-4 + rag 笔记
-- [ ] **S4-T6** RAG 评估：Recall / Precision / MRR（对标搜索系统经验）
-  - 知识 / 操作：待拆进 stage-4 + rag 笔记
-- [ ] **S4-T7** 记忆设计：短期 `MessageWindowChatMemory`（≈ LTRIM）；长期向量库；摘要压缩
-  - 知识 / 操作：待拆进 stage-4 + rag 笔记
-- [ ] **S4-T8** Java 体系类比：向量库 ≈ ES；评估 ≈ 搜索指标；Chunk ≈ 分表策略。铁律：查询与入库必须同一 embedding 模型
-  - 知识 / 操作：待拆进 stage-4 + rag 笔记
+**目标**：能解释一份文档从入库到被检索、被拼进提示词、被答案引用的全过程，并用指标和成本数字说话。
 
-**产出**：`demos/04-rag-java/` —— 一个「基于你自己公司文档/技术文档的 Java 问答 agent」（LangChain4j 实现，Redis/pgvector 做向量存储）
+**两个技术前提（实测结论，不是选型偏好）**：
 
-**参考**：
+1. **DeepSeek 没有 embeddings 接口**（`POST /embeddings` 返回 404）。所以生成仍用 DeepSeek，向量化改用本地 ONNX 模型 `langchain4j-embeddings-bge-small-zh-v15-q`（BAAI bge-small-zh-v1.5，512 维，模型打进 jar、离线可用、不花钱、不新增 key）
+2. **向量库用你已有的内网 Redis**（`host:port` + 密码，配置走 `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` / `REDIS_DB` 环境变量，密码不入库）。**第 1 天就要做连通性检查**，第 5 天用真实命令判定走哪条路：
+   - **路线 A**：Redis 同时带 RediSearch 和 RedisJSON（`FT.CREATE` 与 `JSON.SET` 都不报 unknown command）→ 向量用 `RedisEmbeddingStore` 存服务端
+   - **路线 B**：模块不全 → 向量用 `InMemoryEmbeddingStore` + `serializeToFile` 落 `demos/04-rag/vector-data/`，Redis 只当记忆仓库（`StoreType.STRING`，不依赖 JSON 模块）。**第 6–14 天内容一条不减**
+   - 两条路都要：启动时 `ping` 探活并给出可读错误；`UnifiedJedis` Bean 必须 `destroyMethod = "close"`，否则内网 Redis 连接数会被占满
 
-- LangChain4j 官方文档：RAG 章节（核心，最详细的 Java RAG 教程）
-- Spring AI 官方文档：VectorStore / Embedding
-- Anthropic：RAG 最佳实践 / Contextual Retrieval 文章（必读）
+   pgvector / Milvus 只读文档对照，不落地。
+
+**留到后面阶段的事**：分布式/托管向量库、专用 rerank 模型、ES 承担关键词检索、真实业务文档与增量更新（阶段 6）；query 改写（HyDE / Multi-Query）、Eval 进 CI、真实身份接 Spring Security（阶段 5）；MCP 与多 Agent（阶段 5）。
+
+**动手类型**（与 [stage-4.md](stage-4.md) 标签一致）：`【不写代码】` · `【写代码】` · `【调用后端】`。**硬性写代码日 = D2～D12**（D1 建夹具与基线，D13 只调参数，D14 收口）。
+
+**阶段完成总开关**（下面 8 条 S4-T 全勾，本阶段才算完）：
+
+- [ ] S4-T1 Embedding 向量化与切块
+- [ ] S4-T2 向量库：内存 → Redis
+- [ ] S4-T3 完整链路（LangChain4j，里程碑）
+- [ ] S4-T4 Spring AI 版 RAG 对照
+- [ ] S4-T5 进阶检索：混合 + Rerank
+- [ ] S4-T6 RAG 评估
+- [ ] S4-T7 记忆设计：Redis 仓库 + 长期向量记忆
+- [ ] S4-T8 Java 类比、铁律与收口
+
+---
+
+### 这一阶段在学什么
+
+阶段 3 的 Agent 能查订单、能记住上一句，但它知道的只有两张内存表。用户问「去上海出差住一晚最多报多少」，它只能按训练语料里的通用说法编。**事实不在模型参数里，也不在你的工具菜单里——它在文档里。**
+
+RAG 要做的事只有一句：**先把相关的那几段找出来，再放进提示词**。第 1 天用手贴一段资料做对照，就是在人工执行这件事；后面 12 天把它自动化，并回答三个工程问题——怎么切、怎么找、怎么证明找对了。
+
+用已经会的后端来对照：
+
+| 你已经会的 | 在 RAG 里 | 作用 |
+| --- | --- | --- |
+| 建索引 / 倒排 / ES | 向量库 + 向量索引 | 按语义而不是按词匹配，排序依据从词频换成语义距离 |
+| 分库分表、分页 | 切块 chunk | 边界怎么划直接决定检索质量，比分区更敏感 |
+| 行级数据权限 | 元数据过滤 | 条件拼在检索里，不是查完再筛 |
+| 序列化协议 / 字符集 | embedding 模型 | 两端必须一致，否则解码出来是乱码 |
+| 搜索系统的 Recall / MRR | RAG 评估 | 一模一样，不用重新理解 |
+| 缓存一致性 | 换模型必须重建索引 | 旧向量和新向量不在同一个坐标空间 |
+
+一次提问在 RAG 里走完这些步。前四步是**离线一次性任务**，后三步是**每次请求都跑的在线路径**——搞错这个分界，就会出现「每次提问都重新入库」：
+
+| 步 | 发生什么 | 什么时候 | 本仓库里对应 |
+| -- | --- | --- | --- |
+| 1 加载 | 读 markdown | 入库时一次 | `FileSystemDocumentLoader` |
+| 2 切块 | 长文切成 ~300 token 的块 | 入库时一次 | `DocumentSplitters.recursive` |
+| 3 算向量 | 每块 embed 成 512 维 | 入库时一次 | `BgeSmallZhV15QuantizedEmbeddingModel` |
+| 4 入库 | 向量 + 原文 + 元数据进 Redis | 入库时一次 | `RedisEmbeddingStore.add` |
+| 5 检索 | 问题算向量，取 top-k | 每次提问 | `EmbeddingStore.search` / `ContentRetriever` |
+| 6 拼装 | 块拼成「参考资料：…」 | 每次提问 | `ContentInjector` |
+| 7 生成 | 带资料生成答案 + 出处 | 每次提问 | `ChatModel` |
+
+做完 [stage-4.md](stage-4.md) 的 14 天，应能对着页面讲清四件事：
+
+- 一条答案里的数字，来自 `sources[]` 里哪一块的原文
+- 为什么 `dept=all` 看不到技术部手册，而 `dept=tech` 能看到公共制度
+- 为什么加了 BM25 之后 recall 上升、加了 Rerank 之后 MRR 上升但 recall 不动
+- 为什么换 embedding 模型必须整库重建，不重建会怎样
+
+### 需要了解的
+
+这些内容建立地图即可。14 天里会在阅读或页面字段中碰到它们，不要求本阶段单独做出可运行版本。
+
+**RAG 不是唯一解。** 文档总量小于几万字时，直接全塞进长上下文更简单（DeepSeek 上下文 1M token），连切块和检索都不用做。RAG 是在文档量超过提示词预算、或者要按权限过滤时才必须的。**先问「能不能直接塞」，再问「要不要 RAG」**——这和阶段 3「能用一次调用解决就不要做循环」是同一条原则。
+
+**切块的三种丢信息方式。** 切在句子中间（半句话）、切掉上下文（不知道属于哪份文档）、跨块答案（一个规则横跨两块）。Contextual Retrieval 的做法是入库前给每块补一句「它属于哪个文档的哪一节」；本阶段用**规则拼标题**替代 LLM 生成，成本为零，收益已经能看出来。
+
+**两路召回的分工。** 向量擅长口语化改写，BM25 擅长精确术语和编号。真实系统几乎都两路并用，再用 RRF 按排名融合（不看原始分数，因为量纲不同）。Rerank 只重排已有候选，不增加召回——所以「recall 上不去时加 Rerank 没用」。
+
+**记忆是两层，不是二选一。** 短期窗口管「最近 N 条」，长期向量记忆管「很久以前提过什么」。窗口存在 Redis 之后重启不丢；长期记忆跨会话可见（这是设计选择，不是 bug，要按人过滤就加元数据）。
+
+**评估要先有基线。** 12 条问题、三个指标（Recall / Precision / MRR），改一个变量跑一次。没有基线，任何「感觉变好了」都不算数。这和你在搜索系统、接口性能上做的事完全一样。
+
+### 要掌握的知识点
+
+下面每条都要能讲出「它管哪一段」。完整内容在 [rag.md](../notes/rag.md)，页面上的字段名和类名以 [stage-4.md](stage-4.md) 为准。
+
+#### 向量化
+
+**Embedding。** 文本映射成定长向量。定长、语义相近则方向相近、不可反解。生成模型和 embedding 模型是两个东西，可以用不同厂商。
+
+**余弦相似度与三个锚点。** 1.0 是自相似，0.7~0.9 是同义，0.3 以下基本无关。**分数不能跨模型比**，所以 `minScore` 只能在自己的数据和模型上量。
+
+**Embedding 模型选型。** 看语言、维度、质量、部署方式、成本。本阶段选本地 ONNX bge-small-zh（512 维、免 key、0 成本），代价是质量弱于云端。
+
+**切块。** `chunkSize` / `overlap` / 切分依据三个旋钮。LangChain4j 的 `chunkSize` 是 **token 数不是字符数**（中文 1 字 ≈ 1.5~2 token）。`recursive` 逐级退让：段落 → 句子 → 字符。
+
+**块是检索和溯源的最小单位。** 切坏了事后调参救不回来。
+
+#### 存储与检索
+
+**入库与 top-k。** `add(向量, 原文+元数据)` 和 `search(问题向量, k)` 是同一件事的两个方向。元数据跟着块一起存，是过滤的依据。
+
+**向量库没有「找不到」。** 永远返回 top-k，只是分数低。所以「查不到」要靠 `minScore` + 提示词规则两层兜底。
+
+**向量索引。** `FT.CREATE` 声明 `DIM`（必须等于模型维度）、`DISTANCE_METRIC`、哪些字段可过滤（`TAG` / `NUMERIC`）。**`metadataKeys` 里没声明的字段不能过滤**——第 5 天就要把 `dept` 声明进去。
+
+**策略与仓库分层。** 切块 / top-k / filter 是策略，内存 / Redis 是仓库。换仓库不改效果，但会引入「外部依赖挂了整条断掉」这个新故障——和阶段 3 的 `ChatMemory` / `ChatMemoryRepository` 同一组概念。
+
+**四个可替换组件。** `ContentRetriever`（取）、`ContentAggregator`（合并）、`ContentInjector`（拼）、`RetrievalAugmentor`（编排）。第 7 天换 retriever 的 filter，第 11 天换 aggregator。
+
+**元数据过滤 = 行级权限，且在检索前。** 检索后再筛会浪费 top-k 名额。正确写法是 `isIn("all", "tech")`——「本部门 + 公共」，不是 `isEqualTo("tech")`。
+
+**Spring AI 的映射。** `VectorStore`（入库+检索）+ `RetrievalAugmentationAdvisor`（一个 Advisor 顶掉三个组件）。`similarityThreshold` 与 `minScore` 不是同一刻度，分数不能跨框架比。
+
+**铁律。** 查询与入库必须同一个 embedding 模型。换模型 = 整库重建，没有第二条路。工程上要加入库时记 `rag:meta`（模型名 + 维度）、检索前比对，不一致返回 409——**把静默错误变成显式拒绝**。
+
+#### 评估
+
+**三个指标各管什么。** Recall 管召回（切块、混合检索），Precision / MRR 管排序（Rerank）。k 调大 recall↑precision↓。
+
+**评估集怎么造。** 问题 + 期望文件 + 期望关键词，每条答案能在文档里找到原句，问题用口语而不是文档原词（用原词提问，指标失去意义）。
+
+**改进要有对照。** 加 BM25 看 recall，加 Rerank 看 precision/MRR。指标没动就说明改错了层，别硬加组件。
+
+**常见失败模式的定位顺序。** 检索结果 → 切块 → minScore → 权限 → embedding 一致性 → 提示词规则 → 模型本身。九成问题在前三步。
+
+#### 记忆与成本
+
+**短期窗口与长期向量记忆是两层。** 窗口管「刚才说了什么」（便宜、有上限），向量记忆管「很久以前提过什么」（贵、能跨会话）。提示词里两段并列。
+
+**记忆仓库。** 内存 → Redis 之后重启不丢。生产必须补 TTL，否则 Redis 被历史撑满。
+
+**成本三块，只有第三块真花钱。** 入库（一次性）、检索（免费或极低）、**生成（top-k 个块 + 问题进提示词，按输入 token 计费）**。`promptChars` 是专门为此加的字段。
+
+**优化顺序。** 调 topK > 调 chunkSize > 压缩模板 > 换便宜模型。topK 从 3 到 5 常常成本涨 60%、recall 只涨几个点。
+
+### 和前后阶段怎么接
+
+| 阶段 | 已经握住的 | 阶段 4 补上的 |
+| --- | --- | --- |
+| 阶段 1 | 提示词决定怎么说、输出长什么样 | 资料由检索决定，不由人贴 |
+| 阶段 2 | 模型点菜，Java 查表 | 文档也是一种「事实来源」，但走检索不走工具 |
+| 阶段 3 | 窗口记忆、`conversationId`、仓库分层 | 记忆仓库换 Redis；旧对话进向量库可检索 |
+| 阶段 5 | — | 固定用夹具文档；query 改写、Eval 进 CI、真实身份、MCP 再做 |
+| 阶段 6 | — | 单机 Redis；分布式向量库、专用 rerank、真实业务文档与增量更新再做 |
+
+操作按 [stage-4.md](stage-4.md) 的 14 天执行。14 天都勾完，阶段 4 完成。
+
+**产出**：`demos/backend/.../stage04/`（embedding / split / retrieve / query / query-springai / eval / memory 七组接口）+ `demos/04-rag/data/` 夹具 + `demos/04-rag/eval/questions.jsonl` + `notes/rag.md` §9 对照表与三句话。
+
+**参考**（博客优先，课和书不进验收）：见 [resources.md#stage-4](resources.md#stage-4)
+
+- [Anthropic：Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval)（必读全文，第 11 天要用）
+- [LangChain4j：RAG](https://docs.langchain4j.dev/tutorials/rag)
+- [Spring AI：Retrieval Augmented Generation](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html)
+- [Redis：Vector similarity search](https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/vectors/)
 - ⚠️ 铁律：查询与入库必须使用同一个 embedding 模型
+
+---
+
+### S4-T1 Embedding 向量化与切块
+
+**干什么**：把中文句子送进本地 ONNX 模型，拿到 512 维向量，算两句话的余弦相似度；再把一份 1200 字的制度切成块，换三种参数看块长和块数怎么变。
+
+**为了什么**：这两件事是后面所有检索的基础。分数的高低决定「什么算命中」，块的长短决定「一次能带多少资料进提示词」。
+
+**知识完成项**（[rag.md](../notes/rag.md) 对应节全部打勾）：
+
+- [ ] K1 事实不在参数里
+- [ ] K2 RAG 七步链路总览
+- [ ] K3 Embedding：文本到向量
+- [ ] K4 余弦相似度与三个锚点
+- [ ] K5 Embedding 模型选型
+- [ ] K6 切块：块大小 / 重叠 / 按段落
+- [ ] K7 切块丢上下文与 Contextual Retrieval
+
+**操作完成项**：
+
+- [ ] D1 `【不写代码】` 完成判定全部打勾（四份夹具 + 12 条评估问题已确认；内网 Redis 已能 ping 通；无检索 vs 手贴参考两条 curl 已跑）
+- [ ] D2 `【写代码】` 完成判定全部打勾（`dimension=512`；同义 / 无关 / 同一句三组 cosine 已记）
+- [ ] D3 `【写代码】` 完成判定全部打勾（三种切块参数的 `totalChunks` 已记；找到一块被切坏的 `tail`）
+
+---
+
+### S4-T2 向量库：内存 → Redis
+
+**干什么**：先用 `InMemoryEmbeddingStore` 把块灌进去、检索出 top-k；再把同一个 store 换成 `RedisEmbeddingStore`，业务代码不改，看 `FT.INFO` 里的 `DIM` 和 `num_docs`，再关掉 Redis 看故障长什么样。
+
+**为了什么**：看清「策略与仓库分层」。顺带把「元数据字段必须提前声明才能过滤」这条约束在第 5 天就落实，别拖到第 7 天才发现要重建索引。
+
+**知识完成项**：
+
+- [ ] K8 入库与 top-k 检索
+- [ ] K9 minScore 是硬门槛；向量库永远返回「最像」
+- [ ] K10 向量索引：FT.CREATE / DIM / 距离度量（A）与本地索引（B）
+- [ ] K11 策略与仓库分层
+
+**操作完成项**：
+
+- [ ] D4 `【写代码】` 完成判定全部打勾（`rank=1` 的块里有「600」；空问题的低分现象已记）
+- [ ] D5 `【写代码】` 完成判定全部打勾（`FT.CREATE` / `JSON.SET` 探测完成并记下路线 A 还是 B；路线 A 核 `FT.INFO` 的 DIM/num_docs，路线 B 核 `index.json`；改错密码时的启动失败已记）
+
+---
+
+### S4-T3 完整链路（里程碑）
+
+**干什么**：把检索结果拼进提示词，`POST /api/stage/04/query` 返回 `answer` + `sources` + `promptChars`。再用 `isIn("all", dept)` 做检索前过滤，让普通员工看不到技术部手册。
+
+**为了什么**：这是本阶段的里程碑——**答案里的数字要能对上 `sources[0].text` 里的原文**。后面评估、混合检索、记忆都在改这条链路上的某一个组件。
+
+**知识完成项**：
+
+- [ ] K12 Retriever / Aggregator / Injector / Augmentor
+- [ ] K13 提示词规则与「查不到」兜底
+- [ ] K14 元数据过滤 = 行级权限，过滤在检索前
+
+**操作完成项**：
+
+- [ ] D6 `【写代码】` 完成判定全部打勾（`answer` 里的 600 对上 `sources` 原文；无关问题答「查不到」）
+- [ ] D7 `【写代码】` 完成判定全部打勾（`dept=all` 看不到 ops；`dept=tech` 能看到 ops 与 travel；看不到 contract）
+
+---
+
+### S4-T4 Spring AI 版 RAG 对照
+
+**干什么**：同一句问题，用 `VectorStore` + `RetrievalAugmentationAdvisor` 再跑一遍，和 LangChain4j 那条并排记答案与 `promptChars`。
+
+**为了什么**：看清「四个组件」压成「两个组件」的映射。以后选框架看的是可替换点细不细，不是流不流行。
+
+**知识完成项**：
+
+- [ ] K15 Spring AI 映射：VectorStore + RAG Advisor
+
+**操作完成项**：
+
+- [ ] D8 `【写代码】` 完成判定全部打勾（`query-springai` 能答对；`threshold=0.85` 时检索不到；两边 `promptChars` 已记）
+
+---
+
+### S4-T5 进阶检索：混合 + Rerank
+
+**干什么**：自己写一个 2-gram 的 BM25，和向量两路召回用 RRF 融合，再用一次 DeepSeek 调用给候选打分重排。用第 10 天的同一套评估证明它变好了。
+
+**为了什么**：向量漏精确词、BM25 不懂同义词。两路并用是真实系统的常态。关键是**用指标证明**，而不是「业界都这么做」。
+
+**知识完成项**：
+
+- [ ] K19 BM25 与向量互补
+- [ ] K20 RRF：按排名倒数融合
+- [ ] K21 Rerank 只改排序，不改召回
+
+**操作完成项**：
+
+- [ ] D11 `【写代码】` 完成判定全部打勾（`hybrid` 的 recall 高于基线；`hybrid+rerank` 的 precision / MRR 高于 `hybrid`）
+
+---
+
+### S4-T6 RAG 评估
+
+**干什么**：用 12 条评估问题跑 `POST /api/stage/04/eval`，`topK` 取 1 / 3 / 5，输出 Recall / Precision / MRR 和失败清单，逐条归因。
+
+**为了什么**：没有基线，后面任何改动都无法判断好坏。失败样例的归因决定下一步该改切块还是改检索。
+
+**知识完成项**：
+
+- [ ] K17 Recall / Precision / MRR 各管什么
+- [ ] K18 评估集怎么造
+
+**操作完成项**：
+
+- [ ] D10 `【写代码】` 完成判定全部打勾（三组 topK 指标已记；`failures` 逐条归因写在 §9）
+- [ ] D10 `【写代码】` `paragraph` 与 `recursive` 两种切块的指标已对比
+
+---
+
+### S4-T7 记忆设计：Redis 仓库 + 长期向量记忆
+
+**干什么**：把 `MessageWindowChatMemory` 的仓库换成 `RedisChatMemoryStore`，重启后会话还在；再把历史对话 embed 进同一个向量库（`dept=memory`），下一轮按语义捞回。
+
+**为了什么**：阶段 3 的窗口记忆一重启就没。短期窗口和长期向量记忆是两层，各自解决不同的问题，提示词里两段并列。
+
+**知识完成项**：
+
+- [ ] K22 短期窗口与长期向量记忆是两层
+- [ ] K23 记忆仓库：进程内存 / Redis
+
+**操作完成项**：
+
+- [ ] D12 `【写代码】` 完成判定全部打勾（重启后 `c1` 的 `windowSize` 不为 0；`c2` 的 `recalledCount` 仍为 1；已记下 `StoreType` 用 JSON 还是 STRING）
+
+---
+
+### S4-T8 Java 类比、铁律与收口
+
+**干什么**：故意换一个 256 维的假模型，看检索报错或返回一堆低分块；加 `rag:meta` 一致性检查把它变成 409；重建恢复。D13 算成本、D14 填表写三句话。
+
+**为了什么**：铁律要踩一次才记得住；成本要算一次才知道 topK 该设几。收口三句话是把 13 天的数字变成能讲给别人听的结论。
+
+**知识完成项**：
+
+- [ ] K16 铁律：查询与入库必须同一 embedding 模型
+- [ ] K24 RAG 的成本构成
+- [ ] K25 topK / chunk / promptChars 与钱
+- [ ] K26 Java 类比
+- [ ] K27 与阶段 5 / 6 的边界
+- [ ] K28 常见失败模式与定位顺序
+
+**操作完成项**：
+
+- [ ] D9 `【写代码】` 完成判定全部打勾（假模型时的现象已记；`rag:meta` 不一致返回 409；重建后恢复正常）
+- [ ] D13 `【调用后端】` 完成判定全部打勾（成本表四行填满；已写出 topK / chunkSize 的选型结论）
+- [ ] D14 `【不写代码】` 完成判定全部打勾（§9 无空行；三句话已按模板填完；`rag` 菜单 `status` 已改 `ready`）
+
+---
+
 
 ---
 
@@ -898,7 +1186,7 @@ Java 写在统一后端 `demos/backend` 的 `stage03` 包。订单和库存沿�
 | 1 提示词工程       | 1-2 周               | BeanOutputConverter 稳定输出结构化 JSON       |
 | 2 Function Calling | 2-3 周               | @Tool 注解式工具调用跑通完整循环              |
 | 3 Agent 框架       | 10 天                | 控制台「Agent 核心」跑通：手写 steps、会话窗口、三种规划、固定图、停止条件 |
-| 4 RAG              | 3-4 周               | LangChain4j 文档问答准确率达标                |
+| 4 RAG              | 14 天（3-4 周）      | 文档问答 recall@3 ≥ 0.8；`sources` 与答案可逐条核对 |
 | 5 工程化           | 2-3 周               | Spring AI MCP Server + 自动化评估             |
 | 6 落地项目         | 4-6 周               | 完整 Spring Boot 项目交付                     |
 
@@ -969,5 +1257,7 @@ Java 写在统一后端 `demos/backend` 的 `stage03` 包。订单和库存沿�
 | 2026-09-10 | 阶段 2 整合     | 将 tool-use.md 并入 stage-2.md：写代码日历、示例效果、前后端说明、§9 单文件学习                                                           | stage-2.md                                                                      |
 | 2026-11-05 | 阶段 2          | 任务清单前补「这项技术是干什么的」：一次请求里谁点菜、谁执行、结果如何回到回答，并挂概念向官方说明                                         | 本节                                                                            |
 | 2026-11-12 | 阶段 3          | 知识点留在本文件并写细；10 天的博客、要写的代码和页面结果改到 stage-3.md，博客放进对应的那一天                                   | [stage-3.md](stage-3.md)                                                        |
+| 2026-11-24 | 阶段 4          | 按三层约定改造：S4-T1～T8 带知识 / 操作完成项；14 天操作新建 [stage-4.md](stage-4.md)，知识拆成 K1–K28 新建 [rag.md](../notes/rag.md)。前置条件改为实测结论：DeepSeek 无 embeddings 接口 → 本地 ONNX `bge-small-zh-v1.5`（512 维） | [stage-4.md](stage-4.md)、[rag.md](../notes/rag.md)                              |
+| 2026-11-24 | 阶段 4 Redis    | 向量库改为**用户已有的内网 Redis**（host:port + 密码走环境变量），不装本地服务。第 1 天加连通性检查，第 5 天用 `FT.CREATE` / `JSON.SET` 实测判定两条路：A 用 `RedisEmbeddingStore`，B 用 `InMemoryEmbeddingStore` + 文件落盘（Redis 只做记忆，`StoreType.STRING`）。补 `UnifiedJedis` 的 close、启动探活、`spring.data.redis.*` 映射 | [stage-4.md](stage-4.md)、[rag.md](../notes/rag.md)                              |
 
-阶段 4 起每次改造时追加一行。
+阶段 4 已完成改造（2026-11-24）。阶段 5、6 进入时按同一模板追加。
